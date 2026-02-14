@@ -1,0 +1,9 @@
+package com.pod.mes.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.pod.mes.domain.WorkOrder;
+import org.apache.ibatis.annotations.Mapper;
+
+@Mapper
+public interface WorkOrderMapper extends BaseMapper<WorkOrder> {
+}

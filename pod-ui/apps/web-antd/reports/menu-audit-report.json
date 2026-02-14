@@ -1,0 +1,116 @@
+{
+  "timestamp": "2026-02-12T07:17:10.516Z",
+  "summary": {
+    "backendCount": 5,
+    "frontendCount": 35,
+    "missing": 2,
+    "orphan": 15,
+    "ignored": 0,
+    "invalid": 1,
+    "conflicts": 2
+  },
+  "missing": [
+    {
+      "componentRaw": "/oms/missing/page",
+      "componentPath": "/oms/missing/page",
+      "menuTitle": "缺失页面示例",
+      "menuName": "MissingPage",
+      "routePath": "/oms/missing",
+      "targetFile": "D:\\podworkspace\\pod-platform\\pod-ui\\apps\\web-antd\\src\\views\\oms\\missing\\page.vue",
+      "reason": ""
+    },
+    {
+      "componentRaw": "/common/page",
+      "componentPath": "/common/page",
+      "menuTitle": "冲突示例2",
+      "menuName": "ConflictSamePath2",
+      "routePath": "/conflict1",
+      "targetFile": "D:\\podworkspace\\pod-platform\\pod-ui\\apps\\web-antd\\src\\views\\common\\page.vue",
+      "reason": ""
+    }
+  ],
+  "orphan": [
+    {
+      "file": "/ai/diagnose/index"
+    },
+    {
+      "file": "/art/artJobs/index"
+    },
+    {
+      "file": "/art/renderTasks/index"
+    },
+    {
+      "file": "/dashboard/analytics/analytics-trends"
+    },
+    {
+      "file": "/dashboard/analytics/analytics-visits-data"
+    },
+    {
+      "file": "/dashboard/analytics/analytics-visits-sales"
+    },
+    {
+      "file": "/dashboard/analytics/analytics-visits-source"
+    },
+    {
+      "file": "/dashboard/analytics/analytics-visits"
+    },
+    {
+      "file": "/dashboard/workspace/index"
+    },
+    {
+      "file": "/ful/fulfillments/index"
+    },
+    {
+      "file": "/mes/workOrders/index"
+    },
+    {
+      "file": "/tms/shipments/index"
+    },
+    {
+      "file": "/wms/outbounds/index"
+    },
+    {
+      "file": "/wms/pickTasks/detail"
+    },
+    {
+      "file": "/workbench/index"
+    }
+  ],
+  "ignored": [],
+  "invalid": [
+    {
+      "componentRaw": "../invalid/path",
+      "componentPath": "/../invalid/path",
+      "menuTitle": "非法路径示例",
+      "menuName": "InvalidPage",
+      "routePath": "/invalid",
+      "targetFile": "",
+      "reason": "Contains invalid characters"
+    }
+  ],
+  "conflicts": {
+    "path": [
+      {
+        "value": "/conflict1",
+        "first": "ConflictSamePath",
+        "second": "ConflictSamePath2"
+      }
+    ],
+    "name": [],
+    "component": [
+      {
+        "component": "/common/page",
+        "menus": [
+          {
+            "name": "ConflictSamePath",
+            "path": "/conflict1"
+          },
+          {
+            "name": "ConflictSamePath2",
+            "path": "/conflict1"
+          }
+        ]
+      }
+    ]
+  }
+}

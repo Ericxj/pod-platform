@@ -1,0 +1,6 @@
+com\pod\tms\domain\Shipment.class
+com\pod\tms\mapper\ShipmentMapper.class
+com\pod\tms\job\TmsJobHandler.class
+com\pod\tms\mapper\PlatformAckMapper.class
+com\pod\tms\service\ShipmentApplicationService.class
+com\pod\tms\domain\PlatformAck.class

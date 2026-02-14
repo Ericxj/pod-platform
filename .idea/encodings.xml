@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding">
+    <file url="file://$PROJECT_DIR$/pod-ai/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/pod-ai/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/pod-art/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/pod-art/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/pod-common/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/pod-common/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/pod-iam/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/pod-iam/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/pod-infra/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/pod-infra/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/pod-integration/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/pod-integration/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/pod-inv/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/pod-inv/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/pod-mes/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/pod-mes/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/pod-oms/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/pod-oms/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/pod-start/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/pod-start/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/pod-tms/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/pod-tms/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/pod-wms/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/pod-wms/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/resources" charset="UTF-8" />
+  </component>
+</project>

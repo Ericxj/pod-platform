@@ -1,0 +1,7 @@
+com\pod\common\core\domain\Result.class
+com\pod\common\core\domain\BaseEntity.class
+com\pod\common\core\context\TenantContext.class
+com\pod\common\core\exception\BusinessException.class
+com\pod\common\core\context\TenantIgnoreContext.class
+com\pod\common\utils\TraceIdUtils.class
+com\pod\common\core\annotation\RequirePerm.class

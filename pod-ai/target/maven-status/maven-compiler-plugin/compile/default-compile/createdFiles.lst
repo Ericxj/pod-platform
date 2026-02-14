@@ -1,0 +1,5 @@
+com\pod\ai\service\AiApplicationService.class
+com\pod\ai\controller\AiController.class
+com\pod\ai\mapper\AiTaskMapper.class
+com\pod\ai\job\AiJobHandler.class
+com\pod\ai\domain\AiTask.class

@@ -1,0 +1,7 @@
+com\pod\iam\application\MenuQueryServiceTest.class
+com\pod\iam\service\AiDiagnosisServiceTest.class
+com\pod\iam\TestApplication.class
+com\pod\iam\filter\DataPermissionTest.class
+com\pod\iam\service\AuthApplicationServiceTest.class
+com\pod\iam\application\MenuValidatorTest.class
+com\pod\iam\runner\MenuBootstrapValidatorRunnerTest.class

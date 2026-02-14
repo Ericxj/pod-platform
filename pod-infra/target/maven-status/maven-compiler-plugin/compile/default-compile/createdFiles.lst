@@ -1,0 +1,14 @@
+com\pod\infra\handler\MybatisMetaObjectHandler.class
+com\pod\infra\handler\PodTenantLineHandler.class
+com\pod\infra\idempotent\service\IdempotentService.class
+com\pod\infra\outbox\mapper\OutboxMapper.class
+com\pod\infra\config\XxlJobConfig.class
+com\pod\infra\filter\RequestIdFilter.class
+com\pod\infra\handler\PodFactoryLineHandler.class
+com\pod\infra\handler\GlobalExceptionHandler.class
+com\pod\infra\filter\TraceIdFilter.class
+com\pod\infra\idempotent\mapper\IdempotentMapper.class
+com\pod\infra\config\MybatisPlusConfig.class
+com\pod\infra\idempotent\domain\IdempotentRecord.class
+com\pod\infra\outbox\service\OutboxService.class
+com\pod\infra\outbox\domain\OutboxEvent.class

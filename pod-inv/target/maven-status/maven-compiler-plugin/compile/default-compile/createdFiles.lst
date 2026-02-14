@@ -1,0 +1,10 @@
+com\pod\inv\mapper\InventoryLedgerMapper.class
+com\pod\inv\mapper\InventoryBalanceMapper.class
+com\pod\inv\domain\InventoryReservation.class
+com\pod\inv\domain\Inventory.class
+com\pod\inv\service\InventoryApplicationService.class
+com\pod\inv\domain\InventoryBalance.class
+com\pod\inv\domain\InventoryLedger.class
+com\pod\inv\mapper\InventoryMapper.class
+com\pod\inv\controller\InventoryController.class
+com\pod\inv\mapper\InventoryReservationMapper.class

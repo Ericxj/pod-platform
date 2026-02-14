@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="pod-art" />
+        <module name="pod-integration" />
+        <module name="pod-inv" />
+        <module name="pod-iam" />
+        <module name="pod-oms" />
+        <module name="pod-mes" />
+        <module name="pod-ai" />
+        <module name="pod-common" />
+        <module name="pod-tms" />
+        <module name="pod-start" />
+        <module name="pod-wms" />
+        <module name="pod-infra" />
+      </profile>
+    </annotationProcessing>
+  </component>
+</project>

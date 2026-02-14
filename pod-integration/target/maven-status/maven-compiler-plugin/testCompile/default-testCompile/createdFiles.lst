@@ -1,0 +1,10 @@
+com\pod\integration\WorkOrderRoutingTest.class
+com\pod\integration\TestApplication.class
+com\pod\integration\LinkageIntegrationTest.class
+com\pod\integration\RetryIdempotencyIntegrationTest.class
+com\pod\integration\WmsTmsIntegrationTest.class
+com\pod\integration\AiSchedulingIntegrationTest.class
+com\pod\integration\WmsPickingTest.class
+com\pod\integration\ArtMesIntegrationTest.class
+com\pod\integration\AiJobIntegrationTest.class
+com\pod\integration\DataPermissionIntegrationTest.class

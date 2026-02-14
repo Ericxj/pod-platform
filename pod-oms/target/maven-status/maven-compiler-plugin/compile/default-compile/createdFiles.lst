@@ -1,0 +1,16 @@
+com\pod\oms\mapper\UnifiedOrderMapper.class
+com\pod\oms\service\OrderApplicationService.class
+com\pod\oms\mapper\UnifiedOrderItemMapper.class
+com\pod\oms\domain\Fulfillment.class
+com\pod\oms\domain\UnifiedOrder.class
+com\pod\oms\domain\FulfillmentStatus.class
+com\pod\oms\mapper\FulfillmentMapper.class
+com\pod\oms\domain\UnifiedOrderItem.class
+com\pod\oms\controller\OrderController.class
+com\pod\oms\dto\FulfillmentCreateCmd$FulfillmentItemDto.class
+com\pod\oms\service\FulfillmentApplicationService.class
+com\pod\oms\controller\FulfillmentController.class
+com\pod\oms\job\OrderPullJob.class
+com\pod\oms\dto\FulfillmentCreateCmd.class
+com\pod\oms\mapper\FulfillmentItemMapper.class
+com\pod\oms\domain\FulfillmentItem.class

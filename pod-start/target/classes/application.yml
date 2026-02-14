@@ -1,0 +1,44 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: pod-platform
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/pod_system?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: 123456
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+    default-property-inclusion: non_null
+
+mybatis-plus:
+  mapper-locations: classpath*:mapper/**/*.xml
+  global-config:
+    db-config:
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+      id-type: assign_id
+  configuration:
+    map-underscore-to-camel-case: true
+
+logging:
+  level:
+    com.pod: DEBUG
+    org.springframework: INFO
+
+xxl:
+  job:
+    admin:
+      addresses: # http://127.0.0.1:8088/xxl-job-admin
+    accessToken: default_token
+    executor:
+      appname: pod-platform-executor
+      address:
+      ip:
+      port: 9999
+      logpath: ./logs/xxl-job/jobhandler
+      logretentiondays: 30

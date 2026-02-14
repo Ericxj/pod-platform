@@ -1,0 +1,12 @@
+com\pod\mes\mapper\WorkOrderItemMapper.class
+com\pod\mes\mapper\WorkOrderMapper.class
+com\pod\mes\domain\routing\RoutingStepDef.class
+com\pod\mes\service\WorkOrderService.class
+com\pod\mes\domain\routing\RoutingTemplate.class
+com\pod\mes\domain\WorkOrderItem.class
+com\pod\mes\domain\WorkOrder.class
+com\pod\mes\controller\MesController.class
+com\pod\mes\mapper\WorkOrderOpMapper.class
+com\pod\mes\domain\WorkOrderOp.class
+com\pod\mes\domain\routing\RoutingTemplateProvider.class
+com\pod\mes\infra\routing\InMemoryRoutingTemplateProvider.class

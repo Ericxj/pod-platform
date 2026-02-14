@@ -1,0 +1,14 @@
+com\pod\art\domain\ProductionFile.class
+com\pod\art\mapper\RenderTaskMapper.class
+com\pod\art\domain\RenderTask.class
+com\pod\art\domain\ProductionFileVersion.class
+com\pod\art\job\RenderRetryJob.class
+com\pod\art\mapper\ArtJobMapper.class
+com\pod\art\service\ArtJobService$ArtJobCompletedEvent.class
+com\pod\art\service\ArtJobService.class
+com\pod\art\mapper\ProductionFileVersionMapper.class
+com\pod\art\domain\ArtJobItem.class
+com\pod\art\mapper\ArtJobItemMapper.class
+com\pod\art\mapper\ProductionFileMapper.class
+com\pod\art\domain\ArtJob.class
+com\pod\art\controller\ArtController.class
