@@ -8,6 +8,7 @@ import com.pod.infra.context.RequestIdContext;
 import com.pod.infra.idempotent.domain.IdempotentRecord;
 import com.pod.infra.idempotent.mapper.IdempotentMapper;
 import com.pod.infra.idempotent.service.IdempotentService;
+import com.pod.infra.outbox.service.OutboxService;
 import com.pod.inv.domain.InventoryBalance;
 import com.pod.inv.mapper.InventoryBalanceMapper;
 import com.pod.inv.mapper.InventoryLedgerMapper;
@@ -62,6 +63,8 @@ public class OmsInvIntegrationTest {
     private InventoryLedgerMapper ledgerMapper;
     @MockBean
     private IdempotentMapper idempotentMapper;
+    @MockBean
+    private OutboxService outboxService;
 
     @Autowired
     private FulfillmentApplicationService fulfillmentService;
@@ -160,14 +163,10 @@ public class OmsInvIntegrationTest {
         when(balanceMapper.selectOne(any())).thenReturn(balance);
         when(balanceMapper.updateBalanceWithVersion(any(), any(), any(), any(), any(), any())).thenReturn(1);
 
-        // Mock Optimistic Lock for Fulfillment Update
-        // Use Answer to ensure thread safety and strict sequencing
+        // DB 条件更新：WHERE id=? AND status=? AND version=?，只有一次更新成功
         AtomicInteger updateAttempt = new AtomicInteger(0);
-        when(fulfillmentMapper.update(isNull(), any())).thenAnswer(invocation -> {
-            int count = updateAttempt.incrementAndGet();
-            System.out.println("DEBUG: Mock update called. Count=" + count + ", Thread=" + Thread.currentThread().getName());
-            return count == 1 ? 1 : 0;
-        });
+        when(fulfillmentMapper.updateStatusWithLock(any(Long.class), any(), any(), any(Integer.class), any()))
+                .thenAnswer(invocation -> updateAttempt.incrementAndGet() == 1 ? 1 : 0);
 
         // Mock Idempotency to always succeed for different requestIds
         when(idempotentMapper.insert(any(IdempotentRecord.class))).thenReturn(1);
@@ -188,7 +187,11 @@ public class OmsInvIntegrationTest {
                     MDC.remove(RequestIdContext.MDC_KEY);
                 }
             } catch (BusinessException e) {
-                failCount.incrementAndGet();
+                if (e.getMessage() != null && e.getMessage().contains(Fulfillment.ERR_CONCURRENT)) {
+                    failCount.incrementAndGet();
+                } else {
+                    throw e;
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {

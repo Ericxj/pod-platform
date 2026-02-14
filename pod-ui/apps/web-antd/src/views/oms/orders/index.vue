@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type { VxeGridProps } from '#/adapter/vxe-table';
-import { Page, useVbenVxeGrid } from '#/adapter/vxe-table';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { Page } from '#/components/Page';
 import { getOrderList, createFulfillment } from '#/api/oms';
 import { message } from 'ant-design-vue';
 import { usePermission } from '#/composables/usePermission';

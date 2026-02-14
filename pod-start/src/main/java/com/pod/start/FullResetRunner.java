@@ -31,8 +31,13 @@ public class FullResetRunner implements CommandLineRunner {
     public void run(String... args) throws Exception {
         log.info(">>> STARTING FULL DATABASE RESET...");
         
-        File mainScript = new File("d:/podworkspace/db/pod_os_ddl.sql");
-        File v4Script = new File("d:/podworkspace/db/pod_os_reset_and_seed_v4.sql");
+        String baseDir = System.getProperty("user.dir");
+        File dbDir = new File(baseDir, "db");
+        if (!dbDir.isDirectory()) {
+            dbDir = new File(baseDir, "pod-platform/db");
+        }
+        File mainScript = new File(dbDir, "pod_os_ddl.sql");
+        File v4Script = new File(dbDir, "pod_os_reset_and_seed_v4.sql");
         
         if (!mainScript.exists()) {
             log.error(">>> Main script not found: " + mainScript.getAbsolutePath());
@@ -56,8 +61,7 @@ public class FullResetRunner implements CommandLineRunner {
                 ScriptUtils.executeSqlScript(conn, new FileSystemResource(v4Script));
                 log.info(">>> pod_os_reset_and_seed_v4.sql executed.");
             } else {
-                log.error(">>> pod_os_reset_and_seed_v4.sql NOT FOUND at " + v4Script.getAbsolutePath());
-                throw new RuntimeException("Seed script not found!");
+                log.warn(">>> pod_os_reset_and_seed_v4.sql not found at {}, skipping (DDL may already contain full seed).", v4Script.getAbsolutePath());
             }
 
             // Verify fixes

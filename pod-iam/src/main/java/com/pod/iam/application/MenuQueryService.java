@@ -33,9 +33,12 @@ public class MenuQueryService {
         List<IamPermission> allPerms = permissionMapper.selectByUserId(userId);
 
         // 2. Filter: Tenant + Factory + Status + Deleted(handled by mapper usually) + Type(MENU/DIR)
+        // factory_id=0 or null 视为全局菜单，任意工厂上下文均展示
         List<IamPermission> menuPerms = allPerms.stream()
                 .filter(p -> Objects.equals(p.getTenantId(), tenantId))
-                .filter(p -> Objects.equals(p.getFactoryId(), factoryId))
+                .filter(p -> Objects.equals(p.getFactoryId(), factoryId)
+                        || p.getFactoryId() == null
+                        || Long.valueOf(0L).equals(p.getFactoryId()))
                 .filter(p -> "ENABLED".equals(p.getStatus()))
                 .filter(p -> "MENU".equals(p.getPermType()) || "DIR".equals(p.getPermType()))
                 .sorted(Comparator.comparingInt(p -> p.getSortNo() == null ? 0 : p.getSortNo()))
@@ -173,34 +176,26 @@ public class MenuQueryService {
             return "LAYOUT";
         }
 
-        // Rule: if component is blank: return '/' + trimSlashes(menuPath) + '/index'
+        // Rule: if component is blank: return path + '/index' (no leading slash)
         if (StrUtil.isBlank(component)) {
             if (StrUtil.isBlank(menuPath)) {
-                return "/_core/fallback/not-implemented";
+                return "_core/fallback/not-implemented";
             }
             String cleanPath = StrUtil.strip(menuPath, "/");
-            return "/" + cleanPath + "/index";
+            return cleanPath + "/index";
         }
 
-        // Validation: forbid '/api' prefix and forbid '..' '\' ':' 'http'
-        if (component.startsWith("/api") || 
-            component.contains("..") || 
-            component.contains("\\") || 
-            component.contains(":") || 
-            component.contains("http")) {
-            return "/_core/fallback/not-implemented";
+        String normalized = component.trim();
+        if (normalized.startsWith("/")) {
+            normalized = normalized.substring(1);
         }
-
-        // Rule: else ensure leading '/', and if not endsWith '/index' and not endsWith '.vue' -> append '/index'
-        String normalized = component;
-        if (!normalized.startsWith("/")) {
-            normalized = "/" + normalized;
+        if (normalized.startsWith("api") || normalized.contains("..") || normalized.contains("\\")
+            || normalized.contains(":") || normalized.contains("http")) {
+            return "_core/fallback/not-implemented";
         }
-        
         if (!normalized.endsWith("/index") && !normalized.endsWith(".vue")) {
             normalized = normalized + "/index";
         }
-
         return normalized;
     }
 }

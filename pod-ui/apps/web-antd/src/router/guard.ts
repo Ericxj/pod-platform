@@ -50,16 +50,19 @@ function setupAccessGuard(router: Router) {
     const userStore = useUserStore();
     const authStore = useAuthStore();
 
-    // 基本路由，这些路由不需要进入权限拦截
+    // 基本路由（除“登录且已带 token”外）不进入权限拦截；登录且带 token 时先注入动态路由再 replace 离开登录页
     if (coreRouteNames.includes(to.name as string)) {
       if (to.path === LOGIN_PATH && accessStore.accessToken) {
-        return decodeURIComponent(
-          (to.query?.redirect as string) ||
-            userStore.userInfo?.homePath ||
-            preferences.app.defaultHomePath,
-        );
+        if (accessStore.isAccessChecked) {
+          const fromQuery = decodeURIComponent((to.query?.redirect as string) || '');
+          const first = findFirstLeafRoute(accessStore.accessRoutes);
+          const redirectPath =
+            fromQuery || first?.path || userStore.userInfo?.homePath || preferences.app.defaultHomePath;
+          return { path: redirectPath, replace: true };
+        }
+      } else {
+        return true;
       }
-      return true;
     }
 
     // accessToken 检查
@@ -123,47 +126,64 @@ function setupAccessGuard(router: Router) {
     
     const userRoles = userInfo.roles ?? [];
 
-    // 生成菜单和路由
-    const { accessibleMenus, accessibleRoutes } = await generateAccess({
-      roles: userRoles,
-      router,
-      // 则会在菜单中显示，但是访问会被重定向到403
-      routes: accessRoutes,
-    });
+    let accessibleMenus: any[] = [];
+    let accessibleRoutes: any[] = [];
+    try {
+      const result = await generateAccess({
+        roles: userRoles,
+        router,
+        routes: accessRoutes,
+      });
+      accessibleMenus = result.accessibleMenus;
+      accessibleRoutes = result.accessibleRoutes;
+    } catch (e) {
+      const errMsg = e instanceof Error ? e.message : String(e);
+      console.error('[Guard] Route build failed (component not found or similar):', e);
+      const msgForQuery = errMsg.length > 400 ? `${errMsg.slice(0, 400)}…` : errMsg;
+      return {
+        path: '/empty-menus',
+        query: { reason: 'build-failed', message: msgForQuery },
+        replace: true,
+      };
+    }
 
-    // 保存菜单信息和路由信息
+    if (accessibleMenus.length === 0) {
+      if (import.meta.env.DEV) console.warn('[Guard] No menus from backend.');
+      return {
+        path: '/empty-menus',
+        query: { reason: 'no-menus' },
+        replace: true,
+      };
+    }
+
     accessStore.setAccessMenus(accessibleMenus);
     accessStore.setAccessRoutes(accessibleRoutes);
     accessStore.setIsAccessChecked(true);
-    
-    console.info('menus loaded:', accessibleMenus.length);
-    console.info('routes injected:', accessibleRoutes.length);
-    
-    // 目标路由检查与 Fallback
-    // Determine the target redirect path
-    let redirectPath = (from.query.redirect ??
-      (to.path === preferences.app.defaultHomePath
+
+    if (import.meta.env.DEV) {
+      console.info('[Guard] menus loaded:', accessibleMenus.length, 'routes injected:', accessibleRoutes.length);
+      const first = findFirstLeafRoute(accessibleRoutes);
+      if (first) console.info('[Guard] First leaf path:', first.path);
+    }
+
+    const isFromLogin = to.path === LOGIN_PATH || to.path.startsWith('/auth');
+    let redirectPath = (from.query?.redirect
+      ? decodeURIComponent(String(from.query.redirect))
+      : (to.path === preferences.app.defaultHomePath
         ? userInfo.homePath || preferences.app.defaultHomePath
         : to.fullPath)) as string;
+    if (isFromLogin && redirectPath.startsWith('/auth')) {
+      const first = findFirstLeafRoute(accessibleRoutes);
+      redirectPath = first?.path || preferences.app.defaultHomePath;
+      if (import.meta.env.DEV) console.info('[Guard] From login, redirectPath:', redirectPath);
+    }
 
-    // Check if redirectPath actually exists in router
-    // Note: router.resolve always returns a route, but matched might be empty or name might be 'PageNotFound'
     const resolved = router.resolve(redirectPath);
     const is404 = resolved.matched.length === 0 || resolved.name === 'PageNotFound' || resolved.name === 'FallbackNotFound';
-    
     if (is404) {
-       console.warn(`[Guard] Target path ${redirectPath} not found. Searching for a valid route...`);
-       
-       // Strategy: Find first leaf route from accessibleRoutes
-       const firstRoute = findFirstLeafRoute(accessibleRoutes);
-       if (firstRoute) {
-           redirectPath = firstRoute.path;
-           console.info(`[Guard] Redirecting to first available route: ${redirectPath}`);
-       } else {
-           // Absolute fallback
-           redirectPath = '/workbench'; 
-           console.warn(`[Guard] No available routes found. Falling back to ${redirectPath}`);
-       }
+      if (import.meta.env.DEV) console.warn('[Guard] Target path not found:', redirectPath);
+      const firstRoute = findFirstLeafRoute(accessibleRoutes);
+      redirectPath = firstRoute?.path ?? '/empty-menus';
     }
 
     return {

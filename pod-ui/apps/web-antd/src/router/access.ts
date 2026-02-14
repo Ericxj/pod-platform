@@ -1,3 +1,7 @@
+/**
+ * 纯后端动态菜单：/api/iam/me/menus 菜单树 -> RouteRecordRaw -> router.addRoute
+ * component 解析：LAYOUT -> Layout(基础布局)；其他 -> views 下 .vue 动态加载
+ */
 import type {
   ComponentRecordType,
   GenerateMenuAndRoutesOptions,
@@ -9,87 +13,133 @@ import { useAccessStore } from '@vben/stores';
 
 import { message } from 'ant-design-vue';
 
-import { getUserMenusApi } from '#/api';
+import { getMenusApi, getPermsApi } from '#/api';
 import { BasicLayout, IFrameView } from '#/layouts';
 import { $t } from '#/locales';
 
 const forbiddenComponent = () => import('#/views/_core/fallback/forbidden.vue');
-const NotImplemented = () => import('#/views/_core/fallback/not-implemented.vue');
 
+/** 与 @vben/utils generate-routes-backend 中 normalizeViewPath 一致，用于匹配 pageMap 键 */
+function normalizeViewPathForMatch(path: string): string {
+  const normalizedPath = path.replace(/^(\.\/|\.\.\/)+/, '');
+  const viewPath = normalizedPath.startsWith('/') ? normalizedPath : `/${normalizedPath}`;
+  return viewPath.replace(/^\/views/, '');
+}
+
+/**
+ * 归一化后端 component：
+ * - trim
+ * - LAYOUT -> 'Layout'
+ * - 去掉前导 '/'：'/system/user/index' -> 'system/user/index'
+ */
+export function normalizeComponent(raw: string | undefined): string {
+  if (!raw || typeof raw !== 'string') return raw ?? '';
+  const t = raw.trim();
+  if (t.toUpperCase() === 'LAYOUT') return 'Layout';
+  return t.startsWith('/') ? t.slice(1) : t;
+}
+
+/**
+ * 解析视图 component：用 import.meta.glob 的 pageMap 精确匹配，找不到则抛出含期望 key 的错误
+ * 支持 ${comp}.vue 与 ${comp}/index.vue（与 generate-routes-backend 查找的 key 一致）
+ */
+export function resolveView(
+  component: string,
+  pageMap: ComponentRecordType,
+  raw?: string,
+): void {
+  const normalized = normalizeComponent(component || raw);
+  if (!normalized) return;
+
+  const expectedKey = `${normalized.endsWith('.vue') ? normalized : `${normalized}.vue`}`;
+  const expectedNormalized = expectedKey.startsWith('/') ? expectedKey : `/${expectedKey}`;
+
+  const normalizedToOriginal: Record<string, string> = {};
+  for (const key of Object.keys(pageMap)) {
+    const n = normalizeViewPathForMatch(key);
+    normalizedToOriginal[n] = key;
+  }
+
+  if (import.meta.env.DEV && Object.keys(normalizedToOriginal).length > 0) {
+    const sample = Object.keys(normalizedToOriginal).slice(0, 3).join(', ');
+    console.info('[Access] pageMap sample keys (normalized):', sample);
+  }
+
+  if (normalizedToOriginal[expectedNormalized]) return;
+  const withIndex = expectedNormalized.replace(/\.vue$/, '/index.vue');
+  if (normalizedToOriginal[withIndex]) return;
+
+  const expectedKeys = `"${expectedNormalized}" or "${withIndex}" (views path: ${normalized})`;
+  throw new Error(
+    `View component not found: ${raw ?? component} -> ${normalized} (expected key: ${expectedKeys})`,
+  );
+}
+
+/**
+ * 菜单树 -> RouteRecordRaw 前的 component 解析（与 generate-routes-backend 的 pageMap 键一致）
+ */
 function resolveComponentFallback(menus: any[], pageMap: ComponentRecordType) {
   menus.forEach((menu) => {
-    // 递归处理子菜单
     if (menu.children && menu.children.length > 0) {
       resolveComponentFallback(menu.children, pageMap);
     }
-    
-    // 1. 确保 path 以 / 开头
+
     if (menu.path && !menu.path.startsWith('/') && !menu.path.startsWith('http')) {
-        menu.path = '/' + menu.path;
+      menu.path = '/' + menu.path;
     }
 
-    // 2. 如果是目录（有 children），强制 component 为 BasicLayout
+    const raw = menu.component;
+    const normalized = normalizeComponent(raw ?? '');
+
     if (menu.children && menu.children.length > 0) {
-        if (!menu.component || menu.component.toUpperCase() === 'LAYOUT') {
-            menu.component = 'BasicLayout';
-        }
-        return;
+      menu.component = !normalized || normalized === 'Layout' ? 'Layout' : normalized;
+      return;
     }
-    
-    // 3. 处理叶子节点组件
-    // Skip Layouts and specialized components
-    if (
-      menu.component && 
-      menu.component !== 'BasicLayout' && 
-      menu.component !== 'IFrameView' &&
-      menu.component.toUpperCase() !== 'LAYOUT'
-    ) {
-      // Normalize path: remove leading slash for lookup
-      const cleanPath = menu.component.startsWith('/') ? menu.component.slice(1) : menu.component;
-      const key = `../views/${cleanPath}.vue`;
-      const indexKey = `../views/${cleanPath}/index.vue`;
-      
-      if (!pageMap[key] && !pageMap[indexKey]) {
-        console.warn(`[Route Fallback] Component not found in map: ${menu.component}. Trying to guess from path...`);
-        // Try to guess from route path if component path failed
-        guessComponentFromPath(menu, pageMap);
-      }
-    } else if (!menu.component && !menu.children) {
-      // Missing component for leaf node -> Guess from path
-      guessComponentFromPath(menu, pageMap);
-    }
-  });
-}
 
-function guessComponentFromPath(menu: any, pageMap: ComponentRecordType) {
-   if (!menu.path) return;
-   
-   const cleanPath = menu.path.startsWith('/') ? menu.path.slice(1) : menu.path;
-   
-   // Strategy 1: path/index.vue
-   const tryIndex = `../views/${cleanPath}/index.vue`;
-   // Strategy 2: path.vue
-   const tryFile = `../views/${cleanPath}.vue`;
-   
-   if (pageMap[tryIndex]) {
-      menu.component = `${cleanPath}/index`;
-      console.log(`[Route Fallback] Guessed component: ${menu.component}`);
-   } else if (pageMap[tryFile]) {
-      menu.component = cleanPath;
-      console.log(`[Route Fallback] Guessed component: ${menu.component}`);
-   } else {
-       console.error(`[Route Fallback] FAILED to resolve component for ${menu.path}. Marking as NotImplemented.`);
-       menu.component = 'NotImplemented';
-   }
+    if (normalized === 'Layout' || normalized === 'IFrameView') return;
+
+    if (normalized) {
+      try {
+        resolveView(normalized, pageMap, raw);
+        menu.component = normalized;
+      } catch (e) {
+        throw e;
+      }
+      return;
+    }
+
+    const cleanPath = menu.path ? (menu.path.startsWith('/') ? menu.path.slice(1) : menu.path) : '';
+    const tryIndex = `${cleanPath}/index`;
+    const tryFile = cleanPath;
+    if (tryIndex) {
+      try {
+        resolveView(tryIndex, pageMap);
+        menu.component = tryIndex;
+        return;
+      } catch {
+        // ignore
+      }
+    }
+    if (tryFile) {
+      try {
+        resolveView(tryFile, pageMap);
+        menu.component = tryFile;
+        return;
+      } catch {
+        // ignore
+      }
+    }
+    throw new Error(`View component not found for path: ${menu.path} (tried: ${tryIndex}, ${tryFile})`);
+  });
 }
 
 async function generateAccess(options: GenerateMenuAndRoutesOptions) {
   const pageMap: ComponentRecordType = import.meta.glob('../views/**/*.vue');
 
   const layoutMap: ComponentRecordType = {
+    Layout: BasicLayout,
     BasicLayout,
     IFrameView,
-    NotImplemented,
   };
 
   return await generateAccessible(preferences.app.accessMode, {
@@ -99,33 +149,38 @@ async function generateAccess(options: GenerateMenuAndRoutesOptions) {
         content: `${$t('common.loadingMenu')}...`,
         duration: 1.5,
       });
-      // Fetch menus AND permissions together
-      const result = await getUserMenusApi();
-      
-      // Safety check
-      if (!result) {
-          console.error('[GenerateAccess] Failed to fetch menus: result is empty');
-          return [];
-      }
-
-      // Store permissions
       const accessStore = useAccessStore();
-      const codes = result.permissionCodes || [];
-      accessStore.setAccessCodes(codes);
-      
-      const menus = result.menus || [];
-      console.log('[GenerateAccess] Raw menus from backend:', JSON.parse(JSON.stringify(menus)));
-      
-      if (menus.length === 0) {
-          console.warn('[GenerateAccess] No menus returned from backend. Check user permissions.');
-          // TODO: Inject default workbench if needed, or rely on static routes
+
+      if (import.meta.env.DEV) console.info('[Access] Fetching perms...');
+      let codes: string[] = [];
+      try {
+        codes = await getPermsApi();
+        accessStore.setAccessCodes(codes);
+        if (import.meta.env.DEV) console.info('[Access] perms count:', codes.length);
+      } catch (e) {
+        console.error('[Access] getPermsApi failed', e);
       }
 
-      // Apply fallback logic
-      resolveComponentFallback(menus, pageMap);
-      
-      console.log('[GenerateAccess] Processed menus:', JSON.parse(JSON.stringify(menus)));
+      if (import.meta.env.DEV) console.info('[Access] Fetching menus...');
+      let menus: any[] = [];
+      try {
+        menus = await getMenusApi();
+      } catch (e) {
+        console.error('[Access] getMenusApi failed', e);
+        return [];
+      }
 
+      if (menus.length === 0) {
+        if (import.meta.env.DEV) console.warn('[Access] No menus from backend.');
+        return [];
+      }
+
+      try {
+        resolveComponentFallback(menus, pageMap);
+      } catch (e) {
+        console.error('[Access] resolveComponentFallback failed:', e);
+        throw e;
+      }
       return menus;
     },
     // 可以指定没有权限跳转403页面

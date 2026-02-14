@@ -135,4 +135,12 @@ public class IamUserApplicationService {
         List<IamUserRole> userRoles = userRoleMapper.selectList(new LambdaQueryWrapper<IamUserRole>().eq(IamUserRole::getUserId, userId));
         return userRoles.stream().map(IamUserRole::getRoleId).collect(Collectors.toList());
     }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void setUserRoles(Long userId, List<Long> roleIds) {
+        IamUser user = userMapper.selectById(userId);
+        if (user == null) throw new BusinessException("User not found");
+        userRoleMapper.delete(new LambdaQueryWrapper<IamUserRole>().eq(IamUserRole::getUserId, userId));
+        assignRoles(userId, roleIds != null ? roleIds : List.of());
+    }
 }

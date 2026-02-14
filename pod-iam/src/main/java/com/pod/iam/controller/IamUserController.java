@@ -2,21 +2,27 @@ package com.pod.iam.controller;
 
 import com.pod.common.core.annotation.RequirePerm;
 import com.pod.common.core.domain.Result;
+import com.pod.iam.application.DataScopeService;
 import com.pod.iam.application.IamUserApplicationService;
 import com.pod.iam.domain.IamUser;
 import com.pod.iam.dto.UserDto;
+import com.pod.iam.dto.UserFactoryScopesDto;
 import com.pod.iam.dto.UserPageQuery;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/iam/users")
 public class IamUserController {
 
     private final IamUserApplicationService userService;
+    private final DataScopeService dataScopeService;
 
-    public IamUserController(IamUserApplicationService userService) {
+    public IamUserController(IamUserApplicationService userService, DataScopeService dataScopeService) {
         this.userService = userService;
+        this.dataScopeService = dataScopeService;
     }
 
     @GetMapping
@@ -63,6 +69,42 @@ public class IamUserController {
     @RequirePerm("iam:user:reset_pwd")
     public Result<Void> resetPassword(@PathVariable Long id, @RequestBody java.util.Map<String, String> body) {
         userService.resetPassword(id, body.get("password"));
+        return Result.success();
+    }
+
+    @GetMapping("/{id}/factoryScopes")
+    @RequirePerm("iam:user:query")
+    public Result<UserFactoryScopesDto> getFactoryScopes(@PathVariable Long id) {
+        IamUser user = userService.get(id);
+        if (user == null) return Result.error("User not found");
+        List<Long> factoryIds = dataScopeService.getUserFactoryScopeIds(id);
+        return Result.success(new UserFactoryScopesDto(factoryIds));
+    }
+
+    @PutMapping("/{id}/factoryScopes")
+    @RequirePerm("iam:user:update")
+    public Result<Void> putFactoryScopes(@PathVariable Long id, @RequestBody UserFactoryScopesDto dto) {
+        IamUser user = userService.get(id);
+        if (user == null) return Result.error("User not found");
+        dataScopeService.setUserFactoryScopes(id, dto.getFactoryIds());
+        return Result.success();
+    }
+
+    @GetMapping("/{id}/roles")
+    @RequirePerm("iam:user:query")
+    public Result<java.util.List<Long>> getRoleIds(@PathVariable Long id) {
+        IamUser user = userService.get(id);
+        if (user == null) return Result.error("User not found");
+        return Result.success(userService.getRoleIds(id));
+    }
+
+    @PutMapping("/{id}/roles")
+    @RequirePerm("iam:user:update")
+    public Result<Void> putRoleIds(@PathVariable Long id, @RequestBody java.util.Map<String, java.util.List<Long>> body) {
+        IamUser user = userService.get(id);
+        if (user == null) return Result.error("User not found");
+        java.util.List<Long> roleIds = body != null ? body.get("roleIds") : null;
+        userService.setUserRoles(id, roleIds != null ? roleIds : java.util.Collections.emptyList());
         return Result.success();
     }
 }

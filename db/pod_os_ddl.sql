@@ -11,7 +11,7 @@
  Target Server Version : 80300 (8.3.0)
  File Encoding         : 65001
 
- Date: 14/02/2026 09:43:07
+ Date: 14/02/2026 13:55:20
 */
 
 SET NAMES utf8mb4;
@@ -2114,14 +2114,25 @@ CREATE TABLE `iam_permission`  (
 -- ----------------------------
 -- Records of iam_permission
 -- ----------------------------
-INSERT INTO `iam_permission` VALUES (900, 1, 1, '2026-02-14 09:42:01.000', '2026-02-14 09:42:01.000', 0, 1, NULL, NULL, NULL, 'sys:manage', 'System', 'MENU', '/system', 'LAYOUT', NULL, NULL, NULL, NULL, 0, 90, 'ENABLED', 0, 1, 0);
-INSERT INTO `iam_permission` VALUES (901, 1, 1, '2026-02-14 09:42:01.000', '2026-02-14 09:42:01.000', 0, 1, NULL, NULL, NULL, 'sys:user:list', 'User Manage', 'MENU', '/system/user', '/system/user/index', NULL, NULL, NULL, NULL, 900, 1, 'ENABLED', 0, 1, 0);
-INSERT INTO `iam_permission` VALUES (90101, 1, 1, '2026-02-14 09:42:01.000', '2026-02-14 09:42:01.000', 0, 1, NULL, NULL, NULL, 'iam:user:list', 'User List', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 901, 1, 'ENABLED', 0, 1, 0);
-INSERT INTO `iam_permission` VALUES (90102, 1, 1, '2026-02-14 09:42:01.000', '2026-02-14 09:42:01.000', 0, 1, NULL, NULL, NULL, 'iam:user:create', 'User Create', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 901, 2, 'ENABLED', 0, 1, 0);
-INSERT INTO `iam_permission` VALUES (90103, 1, 1, '2026-02-14 09:42:01.000', '2026-02-14 09:42:01.000', 0, 1, NULL, NULL, NULL, 'iam:user:update', 'User Update', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 901, 3, 'ENABLED', 0, 1, 0);
-INSERT INTO `iam_permission` VALUES (90104, 1, 1, '2026-02-14 09:42:01.000', '2026-02-14 09:42:01.000', 0, 1, NULL, NULL, NULL, 'iam:user:delete', 'User Delete', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 901, 4, 'ENABLED', 0, 1, 0);
-INSERT INTO `iam_permission` VALUES (90105, 1, 1, '2026-02-14 09:42:01.000', '2026-02-14 09:42:01.000', 0, 1, NULL, NULL, NULL, 'iam:user:query', 'User Query', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 901, 5, 'ENABLED', 0, 1, 0);
-INSERT INTO `iam_permission` VALUES (90106, 1, 1, '2026-02-14 09:42:01.000', '2026-02-14 09:42:01.000', 0, 1, NULL, NULL, NULL, 'iam:user:reset_pwd', 'User Reset Pwd', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 901, 6, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (900, 1, 1, '2026-02-14 09:42:01.000', '2026-02-14 09:42:01.000', 0, 1, NULL, NULL, NULL, 'sys:manage', '系统管理', 'MENU', '/system', 'LAYOUT', NULL, NULL, NULL, NULL, 0, 90, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (901, 1, 1, '2026-02-14 09:42:01.000', '2026-02-14 09:42:01.000', 0, 1, NULL, NULL, NULL, 'sys:user:list', '用户管理', 'MENU', '/system/user', '/system/user/index', NULL, NULL, NULL, NULL, 900, 1, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (902, 1, 1, '2026-02-14 13:50:14.486', '2026-02-14 13:50:14.486', 0, 1, NULL, NULL, NULL, 'sys:role:list', '角色管理', 'MENU', '/system/role', '/system/role/index', NULL, NULL, NULL, NULL, 900, 2, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (903, 1, 1, '2026-02-14 13:50:14.488', '2026-02-14 13:50:14.488', 0, 1, NULL, NULL, NULL, 'sys:perm:list', '权限管理', 'MENU', '/system/permission', '/system/permission/index', NULL, NULL, NULL, NULL, 900, 4, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (90101, 1, 1, '2026-02-14 09:42:01.000', '2026-02-14 09:42:01.000', 0, 1, NULL, NULL, NULL, 'iam:user:list', '用户列表', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 901, 1, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (90102, 1, 1, '2026-02-14 09:42:01.000', '2026-02-14 09:42:01.000', 0, 1, NULL, NULL, NULL, 'iam:user:create', '新增用户', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 901, 2, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (90103, 1, 1, '2026-02-14 09:42:01.000', '2026-02-14 09:42:01.000', 0, 1, NULL, NULL, NULL, 'iam:user:update', '编辑用户', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 901, 3, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (90104, 1, 1, '2026-02-14 09:42:01.000', '2026-02-14 09:42:01.000', 0, 1, NULL, NULL, NULL, 'iam:user:delete', '删除用户', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 901, 4, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (90105, 1, 1, '2026-02-14 09:42:01.000', '2026-02-14 09:42:01.000', 0, 1, NULL, NULL, NULL, 'iam:user:query', '查询用户', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 901, 5, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (90106, 1, 1, '2026-02-14 09:42:01.000', '2026-02-14 09:42:01.000', 0, 1, NULL, NULL, NULL, 'iam:user:reset_pwd', '重置密码', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 901, 6, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (90201, 1, 1, '2026-02-14 13:50:14.486', '2026-02-14 13:50:14.486', 0, 1, NULL, NULL, NULL, 'iam:role:page', '角色列表', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 902, 1, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (90202, 1, 1, '2026-02-14 13:50:14.486', '2026-02-14 13:50:14.486', 0, 1, NULL, NULL, NULL, 'iam:role:create', '新增角色', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 902, 2, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (90203, 1, 1, '2026-02-14 13:50:14.486', '2026-02-14 13:50:14.486', 0, 1, NULL, NULL, NULL, 'iam:role:update', '编辑角色', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 902, 3, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (90204, 1, 1, '2026-02-14 13:50:14.486', '2026-02-14 13:50:14.486', 0, 1, NULL, NULL, NULL, 'iam:role:delete', '删除角色', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 902, 4, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (90205, 1, 1, '2026-02-14 13:50:14.486', '2026-02-14 13:50:14.486', 0, 1, NULL, NULL, NULL, 'iam:role:grant', '分配权限', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 902, 5, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (90301, 1, 1, '2026-02-14 13:50:14.488', '2026-02-14 13:50:14.488', 0, 1, NULL, NULL, NULL, 'iam:perm:page', '权限列表', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 903, 1, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (90302, 1, 1, '2026-02-14 13:50:14.488', '2026-02-14 13:50:14.488', 0, 1, NULL, NULL, NULL, 'iam:perm:create', '新增权限', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 903, 2, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (90303, 1, 1, '2026-02-14 13:50:14.488', '2026-02-14 13:50:14.488', 0, 1, NULL, NULL, NULL, 'iam:perm:update', '编辑权限', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 903, 3, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (90304, 1, 1, '2026-02-14 13:50:14.488', '2026-02-14 13:50:14.488', 0, 1, NULL, NULL, NULL, 'iam:perm:delete', '删除权限', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 903, 4, 'ENABLED', 0, 1, 0);
 
 -- ----------------------------
 -- Table structure for iam_role
@@ -2198,6 +2209,17 @@ INSERT INTO `iam_role_permission` VALUES (9, 1, 1, '2026-02-14 09:42:01.000', '2
 INSERT INTO `iam_role_permission` VALUES (10, 1, 1, '2026-02-14 09:42:01.000', '2026-02-14 09:42:01.000', 0, 1, NULL, NULL, NULL, 2, 901);
 INSERT INTO `iam_role_permission` VALUES (11, 1, 1, '2026-02-14 09:42:01.000', '2026-02-14 09:42:01.000', 0, 1, NULL, NULL, NULL, 2, 90101);
 INSERT INTO `iam_role_permission` VALUES (12, 1, 1, '2026-02-14 09:42:01.000', '2026-02-14 09:42:01.000', 0, 1, NULL, NULL, NULL, 2, 90105);
+INSERT INTO `iam_role_permission` VALUES (13, 1, 1, '2026-02-14 13:50:14.489', '2026-02-14 13:50:14.489', 0, 1, NULL, NULL, NULL, 1, 902);
+INSERT INTO `iam_role_permission` VALUES (14, 1, 1, '2026-02-14 13:50:14.489', '2026-02-14 13:50:14.489', 0, 1, NULL, NULL, NULL, 1, 90201);
+INSERT INTO `iam_role_permission` VALUES (15, 1, 1, '2026-02-14 13:50:14.489', '2026-02-14 13:50:14.489', 0, 1, NULL, NULL, NULL, 1, 90202);
+INSERT INTO `iam_role_permission` VALUES (16, 1, 1, '2026-02-14 13:50:14.489', '2026-02-14 13:50:14.489', 0, 1, NULL, NULL, NULL, 1, 90203);
+INSERT INTO `iam_role_permission` VALUES (17, 1, 1, '2026-02-14 13:50:14.489', '2026-02-14 13:50:14.489', 0, 1, NULL, NULL, NULL, 1, 90204);
+INSERT INTO `iam_role_permission` VALUES (18, 1, 1, '2026-02-14 13:50:14.489', '2026-02-14 13:50:14.489', 0, 1, NULL, NULL, NULL, 1, 90205);
+INSERT INTO `iam_role_permission` VALUES (19, 1, 1, '2026-02-14 13:50:14.489', '2026-02-14 13:50:14.489', 0, 1, NULL, NULL, NULL, 1, 903);
+INSERT INTO `iam_role_permission` VALUES (20, 1, 1, '2026-02-14 13:50:14.489', '2026-02-14 13:50:14.489', 0, 1, NULL, NULL, NULL, 1, 90301);
+INSERT INTO `iam_role_permission` VALUES (21, 1, 1, '2026-02-14 13:50:14.489', '2026-02-14 13:50:14.489', 0, 1, NULL, NULL, NULL, 1, 90302);
+INSERT INTO `iam_role_permission` VALUES (22, 1, 1, '2026-02-14 13:50:14.489', '2026-02-14 13:50:14.489', 0, 1, NULL, NULL, NULL, 1, 90303);
+INSERT INTO `iam_role_permission` VALUES (23, 1, 1, '2026-02-14 13:50:14.489', '2026-02-14 13:50:14.489', 0, 1, NULL, NULL, NULL, 1, 90304);
 
 -- ----------------------------
 -- Table structure for iam_tenant
@@ -2264,8 +2286,8 @@ CREATE TABLE `iam_user`  (
 -- ----------------------------
 -- Records of iam_user
 -- ----------------------------
-INSERT INTO `iam_user` VALUES (1, 1, 1, '2026-02-14 09:42:01.000', '2026-02-14 09:42:01.000', 0, 1, NULL, NULL, NULL, 'admin', '$2a$10$41W6EFYj4YclSXRIkXBtCuQe.0Df0Wmfdl9FDQ9sl0Lb0f7aDzK/a', 'Administrator', NULL, NULL, 'ENABLED', NULL);
-INSERT INTO `iam_user` VALUES (2, 1, 1, '2026-02-14 09:42:01.000', '2026-02-14 09:42:01.000', 0, 1, NULL, NULL, NULL, 'operator', '$2a$10$41W6EFYj4YclSXRIkXBtCuQe.0Df0Wmfdl9FDQ9sl0Lb0f7aDzK/a', 'Operator User', NULL, NULL, 'ENABLED', NULL);
+INSERT INTO `iam_user` VALUES (1, 1, 1, '2026-02-14 09:42:01.000', '2026-02-14 09:42:01.000', 0, 1, NULL, NULL, NULL, 'admin', '$2a$10$GzCERpucEK3zfFAHJKOBFeliWWhbaeXI9n3.HtKTk8XkHJxcGVRSG', 'Administrator', NULL, NULL, 'ENABLED', NULL);
+INSERT INTO `iam_user` VALUES (2, 1, 1, '2026-02-14 09:42:01.000', '2026-02-14 09:42:01.000', 0, 1, NULL, NULL, NULL, 'operator', '$2a$10$GzCERpucEK3zfFAHJKOBFeliWWhbaeXI9n3.HtKTk8XkHJxcGVRSG', 'Operator User', NULL, NULL, 'ENABLED', NULL);
 
 -- ----------------------------
 -- Table structure for iam_user_role
@@ -4904,16 +4926,23 @@ CREATE TABLE `sys_login_log`  (
   `login_ip` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   `status` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   `message` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  `created_at` datetime NOT NULL,
+  `created_at` datetime(3) NOT NULL COMMENT '创建时间',
+  `updated_at` datetime(3) NOT NULL COMMENT '更新时间',
+  `deleted` tinyint NOT NULL DEFAULT 0 COMMENT '软删除(0否1是)',
+  `version` int NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+  `created_by` bigint NULL DEFAULT NULL COMMENT '创建人',
+  `updated_by` bigint NULL DEFAULT NULL COMMENT '更新人',
   `trace_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
-  PRIMARY KEY (`id`) USING BTREE
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_tenant_factory_created`(`tenant_id` ASC, `factory_id` ASC, `created_at` ASC, `deleted` ASC) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of sys_login_log
 -- ----------------------------
-INSERT INTO `sys_login_log` VALUES (2022486498957631490, 1, 1, 'operator', NULL, 'SUCCESS', 'Login successful', '2026-02-14 09:42:12', '67b3947f5c60492c8e226aedf824141a');
-INSERT INTO `sys_login_log` VALUES (2022486501805563906, 1, 1, 'admin', NULL, 'SUCCESS', 'Login successful', '2026-02-14 09:42:13', '5a93da49f48e47e9b2af9684365e6471');
+INSERT INTO `sys_login_log` VALUES (2022486498957631490, 1, 1, 'operator', NULL, 'SUCCESS', 'Login successful', '2026-02-14 09:42:12.000', '2026-02-14 09:42:12.000', 0, 0, NULL, NULL, '67b3947f5c60492c8e226aedf824141a');
+INSERT INTO `sys_login_log` VALUES (2022486501805563906, 1, 1, 'admin', NULL, 'SUCCESS', 'Login successful', '2026-02-14 09:42:13.000', '2026-02-14 09:42:13.000', 0, 0, NULL, NULL, '5a93da49f48e47e9b2af9684365e6471');
+INSERT INTO `sys_login_log` VALUES (2022549347671269378, 1, 1, 'admin', NULL, 'SUCCESS', 'Login successful', '2026-02-14 13:51:56.286', '2026-02-14 13:51:56.295', 0, 0, NULL, NULL, '93be15bc-f73f-49f0-b391-0a99dc023806');
 
 -- ----------------------------
 -- Table structure for sys_outbox_event

@@ -4,37 +4,75 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.pod.common.core.domain.BaseEntity;
 import com.pod.common.core.exception.BusinessException;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
+/**
+ * 履约单聚合根，富领域模型。
+ * 状态：CREATED -> RELEASED | CANCELLED；RELEASED -> CANCELLED。
+ */
 @TableName("oms_fulfillment")
 public class Fulfillment extends BaseEntity {
 
-    private String fulfillmentNo; // 对应 fulfillment_no
-    private Long unifiedOrderId; // 对应 unified_order_id
-    private String fulfillmentType; // 对应 fulfillment_type
-    private String status; // 对应 status
-    private Integer priority; // 对应 priority
-    private Long warehouseId; // 对应 warehouse_id
-    private LocalDateTime expectedShipAt; // 对应 expected_ship_at
-    private String remark; // 对应 remark
+    private String fulfillmentNo;
+    private Long unifiedOrderId;
+    private String fulfillmentType;
+    private String status;
+    private Integer priority;
+    private Long warehouseId;
+    private LocalDateTime expectedShipAt;
+    private String remark;
 
     @TableField(exist = false)
     private List<FulfillmentItem> items = new ArrayList<>();
 
-    // Factory method for creation
-    public static Fulfillment create(String fulfillmentNo, Long unifiedOrderId) {
+    public static final String ERR_CONCURRENT = "Fulfillment concurrent modification";
+
+    // ------------------------- 工厂方法 -------------------------
+
+    /**
+     * 从统一订单创建履约单（聚合根行为）。
+     * 前置：订单状态必须为 VALIDATED；订单行非空。
+     */
+    public static Fulfillment createFromUnifiedOrder(UnifiedOrder order, List<UnifiedOrderItem> orderItems) {
+        if (order == null) {
+            throw new BusinessException("Order cannot be null");
+        }
+        if (!"VALIDATED".equals(order.getOrderStatus())) {
+            throw new BusinessException("Order must be VALIDATED before fulfillment. Current: " + order.getOrderStatus());
+        }
+        if (orderItems == null || orderItems.isEmpty()) {
+            throw new BusinessException("Order must have at least one item to create fulfillment");
+        }
+
+        String fulfillmentNo = "FF-" + order.getUnifiedOrderNo();
         Fulfillment f = new Fulfillment();
         f.setFulfillmentNo(fulfillmentNo);
-        f.setUnifiedOrderId(unifiedOrderId);
-        f.setFulfillmentType("POD"); // Default type
+        f.setUnifiedOrderId(order.getId());
+        f.setFulfillmentType("POD");
         f.setStatus(FulfillmentStatus.CREATED.name());
-        f.setPriority(100); // Default priority
+        f.setPriority(100);
+        f.setItems(new ArrayList<>());
+
+        int lineNo = 1;
+        for (UnifiedOrderItem oi : orderItems) {
+            if (oi.getSkuId() == null) {
+                throw new BusinessException("Order item must have skuId");
+            }
+            int qty = oi.getQuantity() != null ? oi.getQuantity().intValue() : 0;
+            if (qty <= 0) {
+                throw new BusinessException("Order item quantity must be positive");
+            }
+            f.addItem(oi.getSkuId(), qty, oi.getId(), lineNo++);
+        }
         return f;
     }
 
-    public void addItem(Long skuId, int qty, Long unifiedOrderItemId, int lineNo) {
+    /** 添加行项目（仅用于创建时，不暴露为公开行为） */
+    private void addItem(Long skuId, int qty, Long unifiedOrderItemId, int lineNo) {
         FulfillmentItem item = new FulfillmentItem();
         item.setSkuId(skuId);
         item.setQty(qty);
@@ -44,22 +82,48 @@ public class Fulfillment extends BaseEntity {
         this.items.add(item);
     }
 
-    // Behaviors
-    public void release() {
-        if (!FulfillmentStatus.CREATED.name().equals(this.status)) {
-            throw new BusinessException("Only CREATED fulfillment can be released. Current: " + this.status);
-        }
+    // ------------------------- 行为方法（状态校验 + 不变量） -------------------------
+
+    /**
+     * 确认履约（CREATED -> RELEASED），与 release() 同义，供不同语义的 API 使用。
+     */
+    public void confirm() {
+        FulfillmentStatus current = FulfillmentStatus.from(this.status);
+        current.requireAllowConfirm();
+        ensureItemsNonEmpty();
         this.status = FulfillmentStatus.RELEASED.name();
     }
 
-    public void cancel() {
-         if (FulfillmentStatus.CANCELLED.name().equals(this.status)) {
-             return;
-         }
-         this.status = FulfillmentStatus.CANCELLED.name();
+    /**
+     * 释放到仓库（CREATED -> RELEASED）：状态前置校验 + 行项目非空。
+     */
+    public void release() {
+        FulfillmentStatus current = FulfillmentStatus.from(this.status);
+        current.requireAllowRelease();
+        ensureItemsNonEmpty();
+        this.status = FulfillmentStatus.RELEASED.name();
     }
 
-    // Getters Setters
+    /**
+     * 取消履约（CREATED | RELEASED -> CANCELLED）。
+     */
+    public void cancel() {
+        FulfillmentStatus current = FulfillmentStatus.from(this.status);
+        current.requireAllowCancel();
+        if (FulfillmentStatus.CANCELLED.equals(current)) {
+            return;
+        }
+        this.status = FulfillmentStatus.CANCELLED.name();
+    }
+
+    private void ensureItemsNonEmpty() {
+        if (items == null || items.isEmpty()) {
+            throw new BusinessException("Fulfillment must have at least one item");
+        }
+    }
+
+    // ------------------------- Getters / Setters -------------------------
+
     public String getFulfillmentNo() { return fulfillmentNo; }
     public void setFulfillmentNo(String fulfillmentNo) { this.fulfillmentNo = fulfillmentNo; }
     public Long getUnifiedOrderId() { return unifiedOrderId; }
@@ -76,6 +140,6 @@ public class Fulfillment extends BaseEntity {
     public void setExpectedShipAt(LocalDateTime expectedShipAt) { this.expectedShipAt = expectedShipAt; }
     public String getRemark() { return remark; }
     public void setRemark(String remark) { this.remark = remark; }
-    public List<FulfillmentItem> getItems() { return items; }
-    public void setItems(List<FulfillmentItem> items) { this.items = items; }
+    public List<FulfillmentItem> getItems() { return items == null ? Collections.emptyList() : items; }
+    public void setItems(List<FulfillmentItem> items) { this.items = items != null ? items : new ArrayList<>(); }
 }

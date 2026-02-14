@@ -43,27 +43,27 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   /**
-   * Force fetch and mount menus
+   * Force fetch and mount menus.
+   * - On success: 返回 accessibleRoutes，调用方负责 replace 到 targetPath。
+   * - On 构建失败 (component 不存在等): 抛出，调用方跳 /empty-menus?reason=build-failed。
+   * - On 后端 menus 为空: 返回 []，调用方跳 /empty-menus?reason=no-menus。
    */
-  async function fetchAndMountMenus() {
-      try {
-        console.info('[Auth] Force fetching menus...');
-        const { accessibleMenus, accessibleRoutes } = await generateAccess({
-            roles: userStore.userInfo?.roles || [],
-            router,
-            routes: accessRoutes,
-        });
-
-        accessStore.setAccessMenus(accessibleMenus);
-        accessStore.setAccessRoutes(accessibleRoutes);
-        accessStore.setIsAccessChecked(true);
-
-        console.info('[Auth] Menus mounted:', accessibleMenus.length);
-        return accessibleRoutes;
-      } catch (e) {
-        console.error('[Auth] Failed to fetch menus:', e);
-        return [];
-      }
+  async function fetchAndMountMenus(): Promise<RouteRecordRaw[]> {
+    if (import.meta.env.DEV) console.info('[Auth] Fetching menus and injecting routes...');
+    const { accessibleMenus, accessibleRoutes } = await generateAccess({
+      roles: userStore.userInfo?.roles || [],
+      router,
+      routes: accessRoutes,
+    });
+    accessStore.setAccessMenus(accessibleMenus);
+    accessStore.setAccessRoutes(accessibleRoutes);
+    accessStore.setIsAccessChecked(true);
+    if (import.meta.env.DEV) {
+      console.info('[Auth] Routes injected:', accessibleRoutes.length);
+      const first = findFirstLeafRoute(accessibleRoutes);
+      if (first) console.info('[Auth] First leaf path:', first.path);
+    }
+    return accessibleRoutes;
   }
 
   /**
@@ -126,37 +126,60 @@ export const useAuthStore = defineStore('auth', () => {
              console.info('[Auth] Factory context initialized:', currentFactoryId);
         }
 
-        // 注意：权限码 (AccessCodes) 现在由路由守卫中的 fetchMenuListAsync (generateAccess) 懒加载
-        // 所以这里不需要提前 fetchAccessCodes
-        
-        console.info('[Auth] Triggering route navigation...');
+        if (import.meta.env.DEV) console.info('[Auth] Fetching menus and injecting routes (await)...');
 
-        // Force fetch menus
-        const routes = await fetchAndMountMenus();
+        let routes: RouteRecordRaw[] = [];
+        let redirectPath: string;
+
+        try {
+          routes = await fetchAndMountMenus();
+        } catch (e) {
+          const errMsg = e instanceof Error ? e.message : String(e);
+          console.error('[Auth] Menu/route build failed:', e);
+          redirectPath = `/empty-menus?reason=build-failed&message=${encodeURIComponent(errMsg)}`;
+          await router.replace(redirectPath);
+          if (userInfo?.realName) {
+            notification.success({
+              description: `${$t('authentication.loginSuccessDesc')}:${userInfo?.realName}`,
+              duration: 3,
+              message: $t('authentication.loginSuccess'),
+            });
+          }
+          return { userInfo };
+        }
 
         if (accessStore.loginExpired) {
           accessStore.setLoginExpired(false);
-        } else {
-          if (onSuccess) {
-            await onSuccess();
-          } else {
-             // Determine where to go
-             let redirectPath = userInfo?.homePath || preferences.app.defaultHomePath;
-             
-             // If we have dynamic routes, try to find a better default if homePath is generic
-             // Or strict user requirement: "Jump to first backend menu"
-             if (routes && routes.length > 0) {
-                 const firstRoute = findFirstLeafRoute(routes);
-                 if (firstRoute) {
-                     redirectPath = firstRoute.path;
-                     console.info('[Auth] Redirecting to first available menu:', redirectPath);
-                 }
-             }
-             
-             await router.push(redirectPath);
-             console.info('[Auth] Navigation initiated to:', redirectPath);
-          }
         }
+        if (onSuccess) {
+          await onSuccess();
+        }
+
+        const queryRedirect = router.currentRoute.value.query?.redirect as string | undefined;
+        if (routes.length > 0) {
+          const firstRoute = findFirstLeafRoute(routes);
+          const resolvedRedirect =
+            queryRedirect &&
+            queryRedirect.startsWith('/') &&
+            !queryRedirect.startsWith('/auth')
+              ? decodeURIComponent(queryRedirect)
+              : null;
+          redirectPath =
+            resolvedRedirect ??
+            firstRoute?.path ??
+            userInfo?.homePath ??
+            preferences.app.defaultHomePath;
+          const resolved = router.resolve(redirectPath);
+          if (resolved.matched.length === 0 || resolved.name === 'PageNotFound' || resolved.name === 'FallbackNotFound') {
+            redirectPath = firstRoute?.path ?? redirectPath;
+          }
+        } else {
+          redirectPath = '/empty-menus?reason=no-menus';
+        }
+
+        if (import.meta.env.DEV) console.info('[Auth] redirectPath:', redirectPath);
+        await router.replace(redirectPath);
+        if (import.meta.env.DEV) console.info('[Auth] Replaced to:', redirectPath);
 
         if (userInfo?.realName) {
           notification.success({

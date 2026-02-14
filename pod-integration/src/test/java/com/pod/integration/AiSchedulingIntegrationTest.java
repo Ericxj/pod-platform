@@ -3,6 +3,7 @@ package com.pod.integration;
 import com.pod.ai.domain.AiTask;
 import com.pod.ai.service.AiApplicationService;
 import com.pod.art.service.ArtJobService;
+import com.pod.infra.context.RequestIdContext;
 import com.pod.oms.job.OrderPullJob;
 import com.pod.art.job.RenderRetryJob;
 import com.pod.common.core.context.TenantContext;
@@ -51,9 +52,15 @@ public class AiSchedulingIntegrationTest {
         String bizNo = "IMG_001_" + System.currentTimeMillis();
         String payload = "{\"imageUrl\": \"http://mock/1.jpg\"}";
         
-        // Mock Trace ID
+        // Mock Trace ID and Request ID (required by createDiagnoseTask)
         com.pod.common.utils.TraceIdUtils.setTraceId("test-trace");
-        String taskNo = aiApplicationService.createDiagnoseTask("req-001", bizType, bizNo, payload);
+        String taskNo;
+        try {
+            org.slf4j.MDC.put(RequestIdContext.MDC_KEY, "req-001");
+            taskNo = aiApplicationService.createDiagnoseTask(bizType, bizNo, payload);
+        } finally {
+            org.slf4j.MDC.remove(RequestIdContext.MDC_KEY);
+        }
         com.pod.common.utils.TraceIdUtils.remove();
 
         Assertions.assertNotNull(taskNo);

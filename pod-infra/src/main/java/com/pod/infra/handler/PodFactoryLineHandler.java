@@ -7,6 +7,11 @@ import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.LongValue;
 import org.springframework.stereotype.Component;
 
+/**
+ * 业务表 factory_id 过滤：对「非 iam_*」表强制追加 factory_id = TenantContext.getFactoryId()（当前会话工厂）。
+ * 与 TenantLineInnerInterceptor 配合使用；deleted 由实体 @TableLogic 保证。
+ * 白名单：iam_*、sys_* 等表不追加 factory 条件，仅租户表追加 tenant_id。
+ */
 @Component
 public class PodFactoryLineHandler implements TenantLineHandler {
     @Override
@@ -37,15 +42,8 @@ public class PodFactoryLineHandler implements TenantLineHandler {
         if ("sys_dict".equalsIgnoreCase(tableName)) return true;
         if ("sys_dict_item".equalsIgnoreCase(tableName)) return true;
         if ("sys_idempotent".equalsIgnoreCase(tableName)) return true;
-        if ("iam_data_scope".equalsIgnoreCase(tableName)) return true; // Metadata table, accessed before context set
-        
-        // IAM Core tables are Tenant-Level, not Factory-Level (Factory ID is just for audit/home)
-        if ("iam_user".equalsIgnoreCase(tableName)) return true;
-        if ("iam_role".equalsIgnoreCase(tableName)) return true;
-        if ("iam_menu".equalsIgnoreCase(tableName)) return true;
-        if ("iam_permission".equalsIgnoreCase(tableName)) return true;
-        if ("iam_user_role".equalsIgnoreCase(tableName)) return true;
-        if ("iam_role_permission".equalsIgnoreCase(tableName)) return true;
+        if ("iam_data_scope".equalsIgnoreCase(tableName)) return true;
+        if (tableName != null && tableName.toLowerCase().startsWith("iam_")) return true;
 
         return false;
     }

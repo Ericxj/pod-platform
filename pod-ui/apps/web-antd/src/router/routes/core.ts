@@ -36,7 +36,18 @@ const coreRoutes: RouteRecordRaw[] = [
     name: 'Root',
     path: '/',
     redirect: preferences.app.defaultHomePath,
-    children: [],
+    children: [
+      {
+        name: 'EmptyMenus',
+        path: 'empty-menus',
+        component: () => import('#/views/_core/fallback/empty-menus.vue'),
+        meta: {
+          hideInMenu: true,
+          hideInTab: true,
+          title: '权限未配置',
+        },
+      },
+    ],
   },
   {
     component: AuthPageLayout,

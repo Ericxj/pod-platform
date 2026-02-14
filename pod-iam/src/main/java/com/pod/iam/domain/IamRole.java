@@ -12,7 +12,7 @@ public class IamRole extends BaseEntity {
     private String remark;
 
     public void enable() {
-        this.status = "ACTIVE";
+        this.status = "ENABLED";
     }
 
     public void disable() {

@@ -11,6 +11,7 @@ import com.pod.art.service.ArtJobService;
 import com.pod.common.core.context.TenantContext;
 import com.pod.infra.outbox.domain.OutboxEvent;
 import com.pod.infra.outbox.mapper.OutboxMapper;
+import com.pod.infra.context.RequestIdContext;
 import com.pod.integration.job.PodJobHandler;
 import com.pod.mes.domain.WorkOrder;
 import com.pod.mes.mapper.WorkOrderMapper;
@@ -66,10 +67,15 @@ public class ArtMesIntegrationTest {
         // 1. Create ArtJob from Fulfillment
         Long fulfillmentId = 1001L;
         String jobNo = "JOB-TEST-1";
-        
-        Long jobId = artJobService.createJobFromFulfillment(fulfillmentId, jobNo, "req-1001");
+        Long jobId;
+        try {
+            org.slf4j.MDC.put(RequestIdContext.MDC_KEY, "req-1001");
+            jobId = artJobService.createJobFromFulfillment(fulfillmentId, jobNo);
+        } finally {
+            org.slf4j.MDC.remove(RequestIdContext.MDC_KEY);
+        }
         Assertions.assertNotNull(jobId);
-        
+
         ArtJob job = artJobMapper.selectById(jobId);
         Assertions.assertEquals(ArtJob.STATUS_CREATED, job.getStatus());
         

@@ -55,3 +55,27 @@ export function deleteUser(id: number) {
 export function resetPassword(id: number, password: string) {
   return requestClient.put(`${Api.User}/${id}/password`, { password });
 }
+
+export interface UserFactoryScopesDto {
+  factoryIds: number[];
+}
+
+export function getUserFactoryScopes(userId: number) {
+  return requestClient.get<UserFactoryScopesDto>(`${Api.User}/${userId}/factoryScopes`);
+}
+
+export function putUserFactoryScopes(userId: number, body: UserFactoryScopesDto) {
+  return requestClient.put(`${Api.User}/${userId}/factoryScopes`, body);
+}
+
+export function getUserRoles(userId: number) {
+  return requestClient.get<number[]>(`${Api.User}/${userId}/roles`);
+}
+
+export function putUserRoles(userId: number, roleIds: number[]) {
+  return requestClient.put(`${Api.User}/${userId}/roles`, { roleIds });
+}
+
+export function getMyFactories() {
+  return requestClient.get<number[]>('/iam/factories/my');
+}

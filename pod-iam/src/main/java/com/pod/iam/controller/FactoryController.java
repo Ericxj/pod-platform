@@ -27,45 +27,24 @@ public class FactoryController {
         this.jwtUtils = jwtUtils;
     }
 
-    @GetMapping("/factories/my")
-    public Result<List<Long>> getMyFactories() {
-        Long userId = TenantContext.getUserId();
-        // Since we are inside a factory context usually, we might need global view.
-        // But scopes are Tenant-Level or Global-Level?
-        // Scopes are stored in iam_data_scope, which has tenant_id=0 usually for global or tenant_id=X.
-        // The Mapper handles it.
-        // However, we need to know the User's "Default Factory" to include it if necessary.
-        IamUser user = userMapper.selectById(userId);
-        if (user == null) throw new BusinessException("User not found");
-        
-        List<Long> factories = dataScopeService.getAccessibleFactoryIds(userId, user.getFactoryId());
-        return Result.success(factories);
-    }
-
     @PostMapping("/me/switchFactory")
     public Result<Map<String, Object>> switchFactory(@RequestBody Map<String, Long> body) {
         Long targetFactoryId = body.get("factoryId");
         if (targetFactoryId == null) {
-            throw new BusinessException("Target Factory ID is required");
+            throw new BusinessException(400, "Target Factory ID is required");
         }
-        
         Long userId = TenantContext.getUserId();
         IamUser user = userMapper.selectById(userId);
-        if (user == null) throw new BusinessException("User not found");
+        if (user == null) throw new BusinessException(404, "User not found");
 
-        List<Long> allowedFactoryIds = dataScopeService.getAccessibleFactoryIds(userId, user.getFactoryId());
-        
+        List<Long> allowedFactoryIds = dataScopeService.getAccessibleFactoryIdsStrict(userId);
         if (!allowedFactoryIds.contains(targetFactoryId)) {
-            throw new BusinessException("Access to Factory " + targetFactoryId + " denied");
+            throw new BusinessException(403, "Access to Factory " + targetFactoryId + " denied");
         }
-        
-        // Generate new token
         String newToken = jwtUtils.generateToken(user.getUsername(), user.getId(), user.getTenantId(), targetFactoryId);
-        
         Map<String, Object> res = new HashMap<>();
         res.put("token", newToken);
         res.put("currentFactoryId", targetFactoryId);
-        
         return Result.success(res);
     }
 }

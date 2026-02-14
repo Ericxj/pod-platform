@@ -91,9 +91,11 @@ public class WmsTmsIntegrationTest {
         PickTask pickTask = pickTaskMapper.selectOne(new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<PickTask>().eq("outbound_id", outbound.getId()));
         List<PickTaskLine> pickLines = pickTaskLineMapper.selectList(new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<PickTaskLine>().eq("pick_task_id", pickTask.getId()));
         for (PickTaskLine pl : pickLines) {
-            withRequestId(() -> outboundService.confirmPickLine(pl.getId(), pl.getQty()));
+            final PickTaskLine pickLine = pl;
+            withRequestId(() -> outboundService.confirmPickLine(pickLine.getId(), pickLine.getQty()));
         }
-        withRequestId(() -> outboundService.confirmPick(pickTask.getId()));
+        final PickTask pickTaskFinal = pickTask;
+        withRequestId(() -> outboundService.confirmPick(pickTaskFinal.getId()));
 
         pickTask = pickTaskMapper.selectById(pickTask.getId());
         Assertions.assertEquals("DONE", pickTask.getStatus());
@@ -110,10 +112,11 @@ public class WmsTmsIntegrationTest {
         Assertions.assertEquals("PACKED", outbound.getStatus());
 
         final String[] shipmentNoHolder = new String[1];
+        final OutboundOrder outboundForShipment = outbound;
         withRequestId(() -> {
             Long carrierId = 5001L;
             String shipToAddress = "{\"country\": \"US\", \"city\": \"New York\"}";
-            shipmentNoHolder[0] = shipmentService.createShipment(outbound.getId(), carrierId, shipToAddress);
+            shipmentNoHolder[0] = shipmentService.createShipment(outboundForShipment.getId(), carrierId, shipToAddress);
         });
         String shipmentNo = shipmentNoHolder[0];
         Assertions.assertNotNull(shipmentNo);
