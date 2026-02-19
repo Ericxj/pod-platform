@@ -39,7 +39,7 @@ public class RoleController {
 
     @GetMapping("/{id}")
     @RequirePerm("iam:role:page")
-    public Result<IamRole> get(@PathVariable Long id) {
+    public Result<IamRole> get(@PathVariable("id") Long id) {
         IamRole role = roleService.get(id);
         if (role == null) {
             return Result.error("Role not found");
@@ -56,35 +56,35 @@ public class RoleController {
 
     @PutMapping("/{id}")
     @RequirePerm("iam:role:update")
-    public Result<Void> update(@PathVariable Long id, @RequestBody RoleUpdateDto dto) {
+    public Result<Void> update(@PathVariable("id") Long id, @RequestBody RoleUpdateDto dto) {
         roleService.update(id, dto);
         return Result.success();
     }
 
     @DeleteMapping("/{id}")
     @RequirePerm("iam:role:delete")
-    public Result<Void> delete(@PathVariable Long id) {
+    public Result<Void> delete(@PathVariable("id") Long id) {
         roleService.delete(id);
         return Result.success();
     }
 
     @GetMapping("/{id}/permissions")
     @RequirePerm("iam:role:page")
-    public Result<RolePermissionsDto> getPermissions(@PathVariable Long id) {
+    public Result<RolePermissionsDto> getPermissions(@PathVariable("id") Long id) {
         List<Long> permIds = roleService.getPermissionIds(id);
         return Result.success(new RolePermissionsDto(permIds));
     }
 
     @PutMapping("/{id}/permissions")
     @RequirePerm("iam:role:grant")
-    public Result<Void> putPermissions(@PathVariable Long id, @RequestBody RolePermissionsDto dto) {
+    public Result<Void> putPermissions(@PathVariable("id") Long id, @RequestBody RolePermissionsDto dto) {
         roleService.grantPermissions(id, new GrantPermissionsDto(dto.getPermIds()));
         return Result.success();
     }
 
     @PostMapping("/{id}/grantPermissions")
     @RequirePerm("iam:role:grant")
-    public Result<Void> grantPermissions(@PathVariable Long id, @RequestBody GrantPermissionsDto dto) {
+    public Result<Void> grantPermissions(@PathVariable("id") Long id, @RequestBody GrantPermissionsDto dto) {
         roleService.grantPermissions(id, dto);
         return Result.success();
     }

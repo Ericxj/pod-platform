@@ -4,19 +4,20 @@ import { useVbenForm } from '#/adapter/form';
 import { createPermission, updatePermission, validatePermission } from '#/api/system/permission';
 import { getPermissionTree } from '#/api/system/permission';
 import { message } from 'ant-design-vue';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 const emit = defineEmits(['success']);
 const isUpdate = ref(false);
 const recordId = ref<number | undefined>(undefined);
-const parentOptions = ref<{ label: string; value: number }[]>([{ label: '根', value: 0 }]);
+const drawerType = ref<'MENU' | 'BUTTON' | 'API'>('MENU');
+const parentOptions = ref<{ label: string; value: number }[]>([]);
 
 async function loadParentOptions() {
-  const list = await getPermissionTree('ALL');
-  const flatten = (nodes: typeof list, level = 0): { label: string; value: number }[] => {
+  const list = await getPermissionTree('MENU', true);
+  const flatten = (nodes: any[], level = 0): { label: string; value: number }[] => {
     const opts: { label: string; value: number }[] = [];
-    nodes.forEach((n) => {
-      opts.push({ label: '　'.repeat(level) + `[${n.permType}] ${n.permName}`, value: n.id });
+    nodes?.forEach((n) => {
+      opts.push({ label: '　'.repeat(level) + (n.permName || n.permCode || String(n.id)), value: n.id });
       if (n.children?.length) opts.push(...flatten(n.children, level + 1));
     });
     return opts;
@@ -24,33 +25,16 @@ async function loadParentOptions() {
   parentOptions.value = [{ label: '根', value: 0 }, ...flatten(list)];
 }
 
-const [Form, formApi] = useVbenForm({
-  showActionButtonGroup: false,
-  schema: [
+const schema = computed(() => {
+  const base = [
     { component: 'Input', label: '权限码', fieldName: 'permCode', rules: 'required' },
     { component: 'Input', label: '名称', fieldName: 'permName', rules: 'required' },
     {
       component: 'Select',
-      label: '类型',
-      fieldName: 'permType',
-      rules: 'required',
-      componentProps: {
-        options: [
-          { label: 'MENU', value: 'MENU' },
-          { label: 'BUTTON', value: 'BUTTON' },
-          { label: 'API', value: 'API' },
-        ],
-      },
-    },
-    { component: 'Input', label: '菜单路径', fieldName: 'menuPath' },
-    { component: 'Input', label: '组件', fieldName: 'component' },
-    { component: 'Input', label: 'API 方法', fieldName: 'apiMethod', componentProps: { placeholder: 'GET/POST' } },
-    { component: 'Input', label: 'API 路径', fieldName: 'apiPath', componentProps: { placeholder: '/api/...' } },
-    {
-      component: 'Select',
-      label: '父级',
+      label: drawerType.value === 'MENU' ? '父级菜单' : '所属菜单',
       fieldName: 'parentId',
-      componentProps: { options: parentOptions, fieldNames: { label: 'label', value: 'value' } },
+      rules: drawerType.value === 'BUTTON' ? 'required' : undefined,
+      componentProps: { options: parentOptions.value, fieldNames: { label: 'label', value: 'value' } },
     },
     { component: 'InputNumber', label: '排序', fieldName: 'sortNo', defaultValue: 0 },
     {
@@ -65,44 +49,78 @@ const [Form, formApi] = useVbenForm({
         ],
       },
     },
-  ],
+  ];
+  if (drawerType.value === 'MENU') {
+    return [
+      ...base,
+      { component: 'Input', label: '菜单路径', fieldName: 'menuPath', componentProps: { placeholder: '/system/xxx' } },
+      { component: 'Input', label: '组件', fieldName: 'component', componentProps: { placeholder: 'system/xxx/index' } },
+      { component: 'Input', label: '图标', fieldName: 'icon' },
+      { component: 'Input', label: '重定向', fieldName: 'redirect' },
+      { component: 'Switch', label: '隐藏', fieldName: 'hidden', defaultValue: false },
+      { component: 'Switch', label: '缓存', fieldName: 'keepAlive', defaultValue: true },
+      { component: 'Switch', label: '总是显示', fieldName: 'alwaysShow', defaultValue: false },
+    ];
+  }
+  if (drawerType.value === 'API') {
+    return [
+      ...base,
+      { component: 'Input', label: 'API 方法', fieldName: 'apiMethod', rules: 'required', componentProps: { placeholder: 'GET/POST' } },
+      { component: 'Input', label: 'API 路径', fieldName: 'apiPath', rules: 'required', componentProps: { placeholder: '/api/...' } },
+    ];
+  }
+  return base;
+});
+
+const [Form, formApi] = useVbenForm({
+  showActionButtonGroup: false,
+  schema: schema as any,
 });
 
 const [Drawer, drawerApi] = useVbenDrawer({
   onConfirm: async () => {
     await formApi.validate();
     const values = await formApi.getValues();
-    const permTypeVal = values.permType ?? 'BUTTON';
+    const type = drawerType.value;
     try {
       const valid = await validatePermission({
         permCode: values.permCode?.trim() || undefined,
-        menuPath: permTypeVal === 'MENU' ? values.menuPath?.trim() : undefined,
-        apiMethod: permTypeVal === 'API' ? values.apiMethod?.trim() : undefined,
-        apiPath: permTypeVal === 'API' ? values.apiPath?.trim() : undefined,
-        permType: permTypeVal,
+        menuPath: type === 'MENU' ? values.menuPath?.trim() : undefined,
+        apiMethod: type === 'API' ? values.apiMethod?.trim() : undefined,
+        apiPath: type === 'API' ? values.apiPath?.trim() : undefined,
+        permType: type,
         excludeId: isUpdate.value ? recordId.value : undefined,
       });
       if (!valid.valid) {
         message.warning(valid.message ?? '校验不通过');
         return;
       }
-    } catch (e) {
+    } catch (e: any) {
+      message.error(e?.message || e?.msg || '校验失败');
       return;
     }
     try {
       drawerApi.setState({ loading: true });
-      const payload = {
+      const payload: any = {
         permCode: values.permCode?.trim(),
         permName: values.permName?.trim(),
-        permType: permTypeVal,
-        menuPath: values.menuPath?.trim() || undefined,
-        component: values.component?.trim() || undefined,
-        apiMethod: values.apiMethod?.trim() || undefined,
-        apiPath: values.apiPath?.trim() || undefined,
+        permType: type,
         parentId: values.parentId === 0 ? undefined : values.parentId,
         sortNo: values.sortNo ?? 0,
         status: values.status ?? 'ENABLED',
       };
+      if (type === 'MENU') {
+        payload.menuPath = values.menuPath?.trim() || undefined;
+        payload.component = values.component?.trim() || undefined;
+        payload.icon = values.icon?.trim() || undefined;
+        payload.redirect = values.redirect?.trim() || undefined;
+        payload.hidden = !!values.hidden;
+        payload.keepAlive = values.keepAlive !== false;
+        payload.alwaysShow = !!values.alwaysShow;
+      } else if (type === 'API') {
+        payload.apiMethod = values.apiMethod?.trim() || undefined;
+        payload.apiPath = values.apiPath?.trim() || undefined;
+      }
       if (isUpdate.value && recordId.value != null) {
         await updatePermission(recordId.value, payload);
         message.success('更新成功');
@@ -112,26 +130,30 @@ const [Drawer, drawerApi] = useVbenDrawer({
       }
       drawerApi.close();
       emit('success');
+    } catch (e: any) {
+      message.error(e?.message || e?.msg || '操作失败');
     } finally {
       drawerApi.setState({ loading: false });
     }
   },
   onOpenChange: async (isOpen: boolean) => {
     if (isOpen) {
-      await loadParentOptions();
-      formApi.updateSchema({ fieldName: 'parentId', componentProps: { options: parentOptions } });
-      const data = drawerApi.getData<Record<string, unknown> & { isUpdate?: boolean }>();
+      const data = drawerApi.getData<{ drawerType?: 'MENU' | 'BUTTON' | 'API'; parentId?: number; record?: any; isUpdate?: boolean }>();
+      drawerType.value = data?.drawerType ?? 'MENU';
       isUpdate.value = !!data?.isUpdate;
-      recordId.value = data?.id as number | undefined;
-      if (isUpdate.value && data) {
-        formApi.setValues(data);
-        drawerApi.setTitle('编辑权限点');
-        formApi.updateSchema({ fieldName: 'permCode', componentProps: { disabled: true } });
+      recordId.value = data?.record?.id;
+      await loadParentOptions();
+      if (isUpdate.value && data?.record) {
+        formApi.setValues(data.record);
+        drawerApi.setTitle(drawerType.value === 'MENU' ? '编辑菜单' : drawerType.value === 'BUTTON' ? '编辑按钮权限' : '编辑接口权限');
       } else {
         formApi.resetForm();
-        formApi.setValues({ parentId: data?.parentId ?? 0, sortNo: 0, permType: 'BUTTON' });
-        drawerApi.setTitle('新增权限点');
-        formApi.updateSchema({ fieldName: 'permCode', componentProps: { disabled: false } });
+        formApi.setValues({
+          parentId: data?.parentId ?? 0,
+          sortNo: 0,
+          status: 'ENABLED',
+        });
+        drawerApi.setTitle(drawerType.value === 'MENU' ? '新增菜单' : drawerType.value === 'BUTTON' ? '新增按钮权限' : '新增接口权限');
       }
     }
   },
@@ -140,6 +162,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
 
 <template>
   <Drawer>
-    <Form />
+    <Form :key="drawerType" />
   </Drawer>
 </template>

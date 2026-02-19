@@ -27,9 +27,9 @@ public class DataScopeController {
     @GetMapping
     @RequirePerm("iam:scope:query")
     public Result<DataScopeQueryDto> get(
-            @RequestParam String subjectType,
-            @RequestParam Long subjectId,
-            @RequestParam String scopeType) {
+            @RequestParam("subjectType") String subjectType,
+            @RequestParam("subjectId") Long subjectId,
+            @RequestParam("scopeType") String scopeType) {
         List<Long> scopeIds = dataScopeService.getScopeIds(subjectType, subjectId, scopeType);
         return Result.success(new DataScopeQueryDto(scopeIds));
     }

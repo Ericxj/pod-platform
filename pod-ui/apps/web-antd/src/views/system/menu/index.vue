@@ -1,12 +1,15 @@
 <script lang="ts" setup>
 import { Page } from '@vben/common-ui';
-import { getPermissionTree, createPermission, updatePermission, deletePermission, validatePermission } from '#/api/system/permission';
+import { getPermissionTree, createPermission, updatePermission, deletePermission } from '#/api/system/permission';
 import type { PermissionTreeDto } from '#/api/system/permission';
 import { message, Modal } from 'ant-design-vue';
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted } from 'vue';
 import type { TableColumnType } from 'ant-design-vue';
 import MenuDrawer from './menu-drawer.vue';
 import { useVbenDrawer } from '@vben/common-ui';
+import { usePermission } from '#/composables/usePermission';
+
+const { hasPermission: hasPerm } = usePermission();
 
 const columns: TableColumnType<PermissionTreeDto>[] = [
   { title: '权限码', dataIndex: 'permCode', key: 'permCode', width: 160 },
@@ -65,7 +68,7 @@ onMounted(() => loadMenus());
 <template>
   <Page title="菜单管理">
     <div class="mb-4 flex gap-2">
-      <a-button type="primary" @click="handleAdd()">新增菜单</a-button>
+      <a-button v-if="hasPerm('iam:perm:create')" type="primary" @click="handleAdd()">新增菜单</a-button>
     </div>
     <a-table
       :columns="columns"
@@ -88,9 +91,9 @@ onMounted(() => loadMenus());
           {{ record.keepAlive !== false ? '是' : '否' }}
         </template>
         <template v-else-if="column.key === 'action'">
-          <a-button type="link" size="small" @click="handleAdd(record.id)">新增子菜单</a-button>
-          <a-button type="link" size="small" @click="handleEdit(record)">编辑</a-button>
-          <a-button type="link" size="small" danger @click="handleDelete(record)">删除</a-button>
+          <a-button v-if="hasPerm('iam:perm:create')" type="link" size="small" @click="handleAdd(record.id)">新增子菜单</a-button>
+          <a-button v-if="hasPerm('iam:perm:update')" type="link" size="small" @click="handleEdit(record)">编辑</a-button>
+          <a-button v-if="hasPerm('iam:perm:delete')" type="link" size="small" danger @click="handleDelete(record)">删除</a-button>
         </template>
       </template>
     </a-table>

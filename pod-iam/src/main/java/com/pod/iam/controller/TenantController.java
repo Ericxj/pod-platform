@@ -26,7 +26,7 @@ public class TenantController {
 
     @GetMapping("/{id}")
     @RequirePerm("iam:tenant:page")
-    public Result<IamTenant> get(@PathVariable Long id) {
+    public Result<IamTenant> get(@PathVariable("id") Long id) {
         IamTenant t = tenantService.get(id);
         if (t == null) return Result.error("Tenant not found");
         return Result.success(t);
@@ -41,14 +41,14 @@ public class TenantController {
 
     @PutMapping("/{id}")
     @RequirePerm("iam:tenant:update")
-    public Result<Void> update(@PathVariable Long id, @RequestBody IamTenant entity) {
+    public Result<Void> update(@PathVariable("id") Long id, @RequestBody IamTenant entity) {
         tenantService.update(id, entity);
         return Result.success();
     }
 
     @DeleteMapping("/{id}")
     @RequirePerm("iam:tenant:delete")
-    public Result<Void> delete(@PathVariable Long id) {
+    public Result<Void> delete(@PathVariable("id") Long id) {
         tenantService.delete(id);
         return Result.success();
     }

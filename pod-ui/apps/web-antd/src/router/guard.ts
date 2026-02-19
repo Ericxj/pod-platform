@@ -65,27 +65,21 @@ function setupAccessGuard(router: Router) {
       }
     }
 
-    // accessToken 检查
+    // accessToken 检查：无 token 且目标非 /auth/* 必须强制回登录页
     if (!accessStore.accessToken) {
-      // 明确声明忽略权限访问权限，则可以访问
-      if (to.meta.ignoreAccess) {
-        return true;
-      }
-
-      // 没有访问权限，跳转登录页面
-      if (to.fullPath !== LOGIN_PATH) {
+      if (to.meta.ignoreAccess) return true;
+      const isAuthRoute = to.path === LOGIN_PATH || to.path.startsWith('/auth');
+      if (!isAuthRoute) {
         return {
           path: LOGIN_PATH,
-          // 如不需要，直接删除 query
           query:
             to.fullPath === preferences.app.defaultHomePath
               ? {}
               : { redirect: encodeURIComponent(to.fullPath) },
-          // 携带当前跳转的页面，登录后重新跳转该页面
           replace: true,
         };
       }
-      return to;
+      return true;
     }
 
     // 是否已经生成过动态路由

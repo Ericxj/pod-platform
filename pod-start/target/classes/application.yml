@@ -1,6 +1,13 @@
 server:
   port: 8080
 
+# IAM：禁止启动时写库。生产必须保持 false；仅 dev 需手工初始化时可临时设为 true
+iam:
+  seed:
+    enabled: false
+  menu:
+    validate-on-startup: false
+
 spring:
   application:
     name: pod-platform

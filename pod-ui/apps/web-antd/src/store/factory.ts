@@ -60,12 +60,18 @@ export const useFactoryStore = defineStore('factory', () => {
       factoryIds.value = [];
   }
 
+  /** 供 resetAllStores 调用（setup 语法 store 无 $reset） */
+  function reset() {
+    clear();
+  }
+
   return {
     currentFactoryId,
     factoryIds,
     setFactoryIds,
     setCurrentFactoryId,
     initFactorySettings,
-    clear
+    clear,
+    reset,
   };
 });

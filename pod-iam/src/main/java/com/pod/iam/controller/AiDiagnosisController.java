@@ -29,7 +29,7 @@ public class AiDiagnosisController {
 
     @GetMapping("/diagnose/{id}")
     @PreAuthorize("hasAuthority('SysAiDiagnosis')")
-    public Result<AiDiagnosisRecord> getDiagnosis(@PathVariable Long id) {
+    public Result<AiDiagnosisRecord> getDiagnosis(@PathVariable("id") Long id) {
         AiDiagnosisRecord record = diagnosisService.getDiagnosis(id);
         return Result.success(record);
     }

@@ -82,8 +82,18 @@ export function getPermissionPage(params: PermissionPageQuery) {
   return requestClient.get<PermissionPageResult>(BASE, { params });
 }
 
-export function getPermissionTree(permType: 'MENU' | 'BUTTON' | 'API' | 'ALL' = 'ALL') {
-  return requestClient.get<PermissionTreeDto[]>(`${BASE}/tree`, { params: { permType } });
+/** 分页查询权限（与 getPermissionPage 相同，用于语义化调用） */
+export function pagePermissions(params: PermissionPageQuery) {
+  return getPermissionPage(params);
+}
+
+export function getPermissionTree(
+  permType: 'MENU' | 'BUTTON' | 'API' | 'ALL' = 'ALL',
+  includeDisabled = false,
+) {
+  return requestClient.get<PermissionTreeDto[]>(`${BASE}/tree`, {
+    params: { permType, includeDisabled },
+  });
 }
 
 export function getPermission(id: number) {

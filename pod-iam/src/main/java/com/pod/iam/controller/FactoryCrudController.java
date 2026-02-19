@@ -8,6 +8,7 @@ import com.pod.iam.application.DataScopeService;
 import com.pod.iam.application.IamFactoryApplicationService;
 import com.pod.iam.domain.IamFactory;
 import com.pod.iam.domain.IamUser;
+import com.pod.iam.dto.FactoryAllItemDto;
 import com.pod.iam.dto.FactoryPageQuery;
 import com.pod.iam.mapper.IamUserMapper;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -54,32 +55,18 @@ public class FactoryCrudController {
         return Result.success(factoryService.page(query));
     }
 
+    /** 当前租户下全部 ENABLED 工厂，供数据权限页等下拉使用；tenant_id 来自上下文。 */
     @GetMapping("/all")
     @RequirePerm("iam:factory:page")
-    public Result<List<IamFactory>> all(@RequestParam(required = false) Long tenantId) {
-        FactoryPageQuery q = new FactoryPageQuery();
-        q.setCurrent(1L);
-        q.setSize(9999L);
-        q.setTenantId(tenantId);
-        IPage<IamFactory> page = factoryService.page(q);
-        return Result.success(page.getRecords());
-    }
-
-    /** 数据权限配置页拉取工厂列表，仅需 iam:scope:query */
-    @GetMapping("/forScope")
-    @RequirePerm("iam:scope:query")
-    public Result<List<IamFactory>> forScope(@RequestParam(required = false) Long tenantId) {
-        FactoryPageQuery q = new FactoryPageQuery();
-        q.setCurrent(1L);
-        q.setSize(9999L);
-        q.setTenantId(tenantId);
-        IPage<IamFactory> page = factoryService.page(q);
-        return Result.success(page.getRecords());
+    public Result<List<FactoryAllItemDto>> all(@RequestParam(value = "tenantId", required = false) Long tenantId) {
+        Long tid = tenantId != null ? tenantId : TenantContext.getTenantId();
+        List<FactoryAllItemDto> list = factoryService.listAllEnabled(tid);
+        return Result.success(list);
     }
 
     @GetMapping("/{id}")
     @RequirePerm("iam:factory:page")
-    public Result<IamFactory> get(@PathVariable Long id) {
+    public Result<IamFactory> get(@PathVariable("id") Long id) {
         IamFactory f = factoryService.get(id);
         if (f == null) return Result.error("Factory not found");
         return Result.success(f);
@@ -94,14 +81,14 @@ public class FactoryCrudController {
 
     @PutMapping("/{id}")
     @RequirePerm("iam:factory:update")
-    public Result<Void> update(@PathVariable Long id, @RequestBody IamFactory entity) {
+    public Result<Void> update(@PathVariable("id") Long id, @RequestBody IamFactory entity) {
         factoryService.update(id, entity);
         return Result.success();
     }
 
     @DeleteMapping("/{id}")
     @RequirePerm("iam:factory:delete")
-    public Result<Void> delete(@PathVariable Long id) {
+    public Result<Void> delete(@PathVariable("id") Long id) {
         factoryService.delete(id);
         return Result.success();
     }

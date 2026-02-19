@@ -35,13 +35,9 @@ export function getFactoryPage(params: FactoryPageQuery) {
   return requestClient.get<FactoryPageResult>(BASE, { params });
 }
 
+/** 当前租户下全部 ENABLED 工厂，供数据权限页等使用；返回 { code, msg, data } 中 data 为数组。 */
 export function getFactoryAll(tenantId?: number) {
   return requestClient.get<FactoryRecord[]>(`${BASE}/all`, { params: tenantId != null ? { tenantId } : {} });
-}
-
-/** 数据权限页拉取工厂列表，仅需 iam:scope:query */
-export function getFactoriesForScope(tenantId?: number) {
-  return requestClient.get<FactoryRecord[]>(`${BASE}/forScope`, { params: tenantId != null ? { tenantId } : {} });
 }
 
 export function getFactory(id: number) {

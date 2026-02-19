@@ -2,7 +2,7 @@
 import { ref, watch } from 'vue';
 import { Page } from '#/components/Page';
 import { getDataScopes, putDataScopes } from '#/api/system/scopes';
-import { getFactoriesForScope, getFactoryAll } from '#/api/system/factories';
+import { getFactoryAll } from '#/api/system/factories';
 import { usePermission } from '#/composables/usePermission';
 import { message, Card, Select, Button, Spin } from 'ant-design-vue';
 
@@ -16,23 +16,19 @@ const factoryOptions = ref<{ id: number; factoryName: string }[]>([]);
 const loading = ref(false);
 const saving = ref(false);
 
-function parseFactoryList(res: any): { id: number; factoryName: string }[] {
-  const data = (res as any)?.data ?? res;
+function parseFactoryList(data: any): { id: number; factoryName: string }[] {
   const arr = Array.isArray(data) ? data : (data?.records ?? []);
-  return arr.map((f: any) => ({ id: f.id, factoryName: f.factoryName || f.factoryCode || `工厂${f.id}` }));
+  return arr.map((f: any) => ({ id: f.id, factoryName: f.factoryName ?? f.factoryCode ?? `工厂${f.id}` }));
 }
 
 async function loadOptions() {
   try {
-    const res = await getFactoriesForScope();
-    factoryOptions.value = parseFactoryList(res);
-  } catch (_first) {
-    try {
-      const res = await getFactoryAll();
-      factoryOptions.value = parseFactoryList(res);
-    } catch (_second) {
-      message.error('加载工厂列表失败');
-    }
+    const data = await getFactoryAll();
+    factoryOptions.value = parseFactoryList(data);
+  } catch (e: any) {
+    const msg = e?.response?.data?.msg ?? e?.message ?? '加载工厂列表失败';
+    const traceId = e?.response?.headers?.['trace_id'] ?? e?.response?.headers?.['x-request-id'];
+    message.error(traceId ? `${msg}（${traceId}）` : msg);
   }
 }
 
@@ -50,8 +46,9 @@ async function loadScopes() {
     });
     const data = (res as any)?.data ?? res;
     scopeIds.value = data?.scopeIds ?? [];
-  } catch (e) {
-    message.error('加载数据范围失败');
+  } catch (e: any) {
+    const msg = e?.response?.data?.msg ?? e?.message ?? '加载数据范围失败';
+    message.error(msg);
     scopeIds.value = [];
   } finally {
     loading.value = false;
@@ -76,8 +73,9 @@ async function save() {
       scopeIds: scopeIds.value,
     });
     message.success('保存成功');
-  } catch (e) {
-    message.error('保存失败');
+  } catch (e: any) {
+    const msg = e?.response?.data?.msg ?? e?.message ?? '保存失败';
+    message.error(msg);
   } finally {
     saving.value = false;
   }

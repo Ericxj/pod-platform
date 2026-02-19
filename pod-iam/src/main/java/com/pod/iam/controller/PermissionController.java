@@ -34,19 +34,30 @@ public class PermissionController {
 
     @GetMapping
     @RequirePerm("iam:perm:page")
-    public Result<IPage<IamPermission>> page(PermissionPageQuery query) {
+    public Result<IPage<IamPermission>> page(
+            @RequestParam(value = "current", required = false) Long current,
+            @RequestParam(value = "size", required = false) Long size,
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "permType", required = false) String permType) {
+        PermissionPageQuery query = new PermissionPageQuery();
+        if (current != null) query.setCurrent(current);
+        if (size != null) query.setSize(size);
+        if (keyword != null) query.setKeyword(keyword);
+        if (permType != null) query.setPermType(permType);
         return Result.success(permissionService.page(query));
     }
 
     @GetMapping("/tree")
     @RequirePerm("iam:perm:page")
-    public Result<List<PermissionTreeDto>> tree(@RequestParam(defaultValue = "ALL") String permType) {
-        return Result.success(permissionService.tree(permType));
+    public Result<List<PermissionTreeDto>> tree(
+            @RequestParam(value = "permType", defaultValue = "ALL") String permType,
+            @RequestParam(value = "includeDisabled", defaultValue = "false") boolean includeDisabled) {
+        return Result.success(permissionService.tree(permType, includeDisabled));
     }
 
     @GetMapping("/{id}")
     @RequirePerm("iam:perm:page")
-    public Result<IamPermission> get(@PathVariable Long id) {
+    public Result<IamPermission> get(@PathVariable("id") Long id) {
         IamPermission p = permissionService.get(id);
         if (p == null) {
             return Result.error("Permission not found");
@@ -63,14 +74,14 @@ public class PermissionController {
 
     @PutMapping("/{id}")
     @RequirePerm("iam:perm:update")
-    public Result<Void> update(@PathVariable Long id, @RequestBody PermissionUpdateDto dto) {
+    public Result<Void> update(@PathVariable("id") Long id, @RequestBody PermissionUpdateDto dto) {
         permissionService.update(id, dto);
         return Result.success();
     }
 
     @DeleteMapping("/{id}")
     @RequirePerm("iam:perm:delete")
-    public Result<Void> delete(@PathVariable Long id) {
+    public Result<Void> delete(@PathVariable("id") Long id) {
         permissionService.delete(id);
         return Result.success();
     }
@@ -78,12 +89,12 @@ public class PermissionController {
     @GetMapping("/validate")
     @RequirePerm("iam:perm:page")
     public Result<PermissionValidateResultDto> validate(
-            @RequestParam(required = false) String permCode,
-            @RequestParam(required = false) String menuPath,
-            @RequestParam(required = false) String apiMethod,
-            @RequestParam(required = false) String apiPath,
-            @RequestParam(required = false) Long excludeId,
-            @RequestParam(required = false) String permType) {
+            @RequestParam(value = "permCode", required = false) String permCode,
+            @RequestParam(value = "menuPath", required = false) String menuPath,
+            @RequestParam(value = "apiMethod", required = false) String apiMethod,
+            @RequestParam(value = "apiPath", required = false) String apiPath,
+            @RequestParam(value = "excludeId", required = false) Long excludeId,
+            @RequestParam(value = "permType", required = false) String permType) {
         PermissionValidateResultDto result = permissionService.validate(
                 permCode, menuPath, apiMethod, apiPath, permType, excludeId);
         return Result.success(result);

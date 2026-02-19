@@ -39,15 +39,20 @@ public class IamPermissionApplicationService {
     /**
      * 树结构：按 parent_id 组树，sort_no 升序。
      * permType=MENU 只返回 MENU；ALL 返回所有类型（BUTTON/API 可挂在 MENU 下）。
+     * includeDisabled=false 时仅返回 status=ENABLED。
      */
-    public List<PermissionTreeDto> tree(String permType) {
+    public List<PermissionTreeDto> tree(String permType, boolean includeDisabled) {
         Long tenantId = TenantContext.getTenantId();
-        Long factoryId = TenantContext.getFactoryId();
-        if (tenantId == null || factoryId == null) {
-            throw new BusinessException("Tenant and factory context required");
+        if (tenantId == null) {
+            throw new BusinessException("Tenant context required");
         }
         LambdaQueryWrapper<IamPermission> wrapper = new LambdaQueryWrapper<>();
-        wrapper.orderByAsc(IamPermission::getSortNo);
+        wrapper.eq(IamPermission::getTenantId, tenantId);
+        wrapper.eq(IamPermission::getDeleted, 0);
+        if (!includeDisabled) {
+            wrapper.eq(IamPermission::getStatus, "ENABLED");
+        }
+        wrapper.orderByAsc(IamPermission::getSortNo).orderByAsc(IamPermission::getId);
         List<IamPermission> list = permissionMapper.selectList(wrapper);
         final List<IamPermission> sourceList = list == null ? new ArrayList<>() : list;
 
@@ -103,12 +108,18 @@ public class IamPermissionApplicationService {
     }
 
     public IPage<IamPermission> page(PermissionPageQuery query) {
-        Page<IamPermission> page = new Page<>(query.getCurrent(), query.getSize());
+        Long tenantId = TenantContext.getTenantId();
+        Page<IamPermission> page = new Page<>(query.getCurrent() != null ? query.getCurrent() : 1L, query.getSize() != null ? query.getSize() : 10L);
         LambdaQueryWrapper<IamPermission> wrapper = new LambdaQueryWrapper<>();
+        if (tenantId != null) {
+            wrapper.eq(IamPermission::getTenantId, tenantId);
+        }
+        wrapper.eq(IamPermission::getDeleted, 0);
         wrapper.and(StrUtil.isNotBlank(query.getKeyword()), w -> w
                 .like(IamPermission::getPermCode, query.getKeyword())
                 .or().like(IamPermission::getPermName, query.getKeyword())
-                .or().like(IamPermission::getMenuPath, query.getKeyword()));
+                .or().like(IamPermission::getMenuPath, query.getKeyword())
+                .or().like(IamPermission::getApiPath, query.getKeyword()));
         wrapper.eq(StrUtil.isNotBlank(query.getPermType()), IamPermission::getPermType, query.getPermType());
         wrapper.orderByAsc(IamPermission::getSortNo).orderByAsc(IamPermission::getId);
         return permissionMapper.selectPage(page, wrapper);
@@ -193,6 +204,15 @@ public class IamPermissionApplicationService {
         if (p == null) {
             throw new BusinessException("Permission not found");
         }
+        if ("MENU".equalsIgnoreCase(p.getPermType())) {
+            long children = permissionMapper.selectCount(
+                    new LambdaQueryWrapper<IamPermission>()
+                            .eq(IamPermission::getParentId, id)
+                            .eq(IamPermission::getDeleted, 0));
+            if (children > 0) {
+                throw new BusinessException("Cannot delete menu with children, remove or move children first");
+            }
+        }
         p.setDeleted(1);
         p.setTraceId(TraceIdUtils.getTraceId());
         permissionMapper.updateById(p);
@@ -200,7 +220,7 @@ public class IamPermissionApplicationService {
 
     /**
      * 校验是否冲突（tenant 维度 + deleted=0）。
-     * perm_code: tenant 内唯一；menu_path: 仅 MENU，tenant+factory 唯一；api_method+api_path: 仅 API，tenant 内唯一。
+     * perm_code: tenant 内唯一；menu_path: 仅 MENU，tenant 内唯一；api_method+api_path: 仅 API，tenant 内唯一。
      */
     public PermissionValidateResultDto validate(String permCode, String menuPath, String apiMethod, String apiPath, String permType, Long excludeId) {
         Long tenantId = TenantContext.getTenantId();
@@ -227,10 +247,12 @@ public class IamPermissionApplicationService {
 
         if ("MENU".equalsIgnoreCase(permType) && StrUtil.isNotBlank(menuPath)) {
             LambdaQueryWrapper<IamPermission> w = new LambdaQueryWrapper<>();
-            w.eq(IamPermission::getMenuPath, menuPath).ne(excludeId != null, IamPermission::getId, excludeId);
-            long count = permissionMapper.selectCount(w);
-            if (count > 0) {
-                return PermissionValidateResultDto.conflict("menuPath conflict in tenant+factory");
+            w.eq(IamPermission::getTenantId, tenantId);
+            w.eq(IamPermission::getDeleted, 0);
+            w.eq(IamPermission::getMenuPath, menuPath);
+            w.ne(excludeId != null, IamPermission::getId, excludeId);
+            if (permissionMapper.selectCount(w) > 0) {
+                return PermissionValidateResultDto.conflict("menuPath conflict in tenant");
             }
         }
 

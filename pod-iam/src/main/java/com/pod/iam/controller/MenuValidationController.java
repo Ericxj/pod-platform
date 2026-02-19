@@ -23,7 +23,7 @@ public class MenuValidationController {
     }
 
     @GetMapping("/validate")
-    public Result<MenuValidationResultDto> validate(@RequestParam(required = false) Long factoryId) {
+    public Result<MenuValidationResultDto> validate(@RequestParam(value = "factoryId", required = false) Long factoryId) {
         Long tenantId = TenantContext.getTenantId();
         if (tenantId == null) {
             throw new BusinessException("Tenant context missing");

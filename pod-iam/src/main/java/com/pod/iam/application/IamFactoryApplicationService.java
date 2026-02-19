@@ -8,8 +8,12 @@ import com.pod.common.core.context.TenantContext;
 import com.pod.common.core.exception.BusinessException;
 import com.pod.common.utils.TraceIdUtils;
 import com.pod.iam.domain.IamFactory;
+import com.pod.iam.dto.FactoryAllItemDto;
 import com.pod.iam.dto.FactoryPageQuery;
 import com.pod.iam.mapper.IamFactoryMapper;
+
+import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +40,24 @@ public class IamFactoryApplicationService {
 
     public IamFactory get(Long id) {
         return factoryMapper.selectById(id);
+    }
+
+    /** 当前租户下全部 ENABLED 工厂，用于下拉等；返回 DTO 不暴露通用字段。 */
+    public List<FactoryAllItemDto> listAllEnabled(Long tenantId) {
+        if (tenantId == null) return List.of();
+        LambdaQueryWrapper<IamFactory> w = new LambdaQueryWrapper<>();
+        w.eq(IamFactory::getTenantId, tenantId);
+        w.eq(IamFactory::getStatus, "ENABLED");
+        w.orderByAsc(IamFactory::getId);
+        List<IamFactory> list = factoryMapper.selectList(w);
+        return list.stream().map(f -> {
+            FactoryAllItemDto dto = new FactoryAllItemDto();
+            dto.setId(f.getId());
+            dto.setFactoryCode(f.getFactoryCode());
+            dto.setFactoryName(f.getFactoryName());
+            dto.setStatus(f.getStatus());
+            return dto;
+        }).collect(Collectors.toList());
     }
 
     @Transactional(rollbackFor = Exception.class)

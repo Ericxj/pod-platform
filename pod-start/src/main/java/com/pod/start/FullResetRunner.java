@@ -3,6 +3,7 @@ package com.pod.start;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.FileSystemResource;
@@ -14,8 +15,13 @@ import javax.sql.DataSource;
 import java.io.File;
 import java.sql.Connection;
 
+/**
+ * 仅当 iam.seed.enabled=true 时执行（默认 false）。生产环境禁止开启。
+ * 会执行 pod_os_ddl.sql 及 pod_os_reset_and_seed_v4.sql，清空并重写 iam_* 等表。
+ */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
+@ConditionalOnProperty(name = "iam.seed.enabled", havingValue = "true")
 public class FullResetRunner implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(FullResetRunner.class);

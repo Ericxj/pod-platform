@@ -11,8 +11,9 @@ public class IamMenuProperties {
 
     /**
      * Whether to validate menus on application startup.
+     * Default false: production must not depend on startup validation; enable in dev if needed.
      */
-    private boolean validateOnStartup = true;
+    private boolean validateOnStartup = false;
 
     /**
      * Whether to fail application startup if validation errors are found.

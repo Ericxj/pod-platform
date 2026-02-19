@@ -8,6 +8,7 @@ import com.pod.iam.mapper.IamUserMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -16,8 +17,13 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 仅当 iam.seed.enabled=true 时执行（默认 false）。生产环境禁止开启。
+ * 会更新 iam_user 中 admin/operator 的密码为 123456。
+ */
 @Component
 @Order(Ordered.LOWEST_PRECEDENCE)
+@ConditionalOnProperty(name = "iam.seed.enabled", havingValue = "true")
 public class PasswordResetRunner implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(PasswordResetRunner.class);

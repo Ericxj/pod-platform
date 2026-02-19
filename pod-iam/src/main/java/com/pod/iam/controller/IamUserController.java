@@ -33,7 +33,7 @@ public class IamUserController {
 
     @GetMapping("/{id}")
     @RequirePerm("iam:user:query")
-    public Result<UserDto> get(@PathVariable Long id) {
+    public Result<UserDto> get(@PathVariable("id") Long id) {
         IamUser user = userService.get(id);
         if (user == null) return Result.error("User not found");
         
@@ -60,21 +60,21 @@ public class IamUserController {
 
     @DeleteMapping("/{id}")
     @RequirePerm("iam:user:delete")
-    public Result<Void> delete(@PathVariable Long id) {
+    public Result<Void> delete(@PathVariable("id") Long id) {
         userService.delete(id);
         return Result.success();
     }
     
     @PutMapping("/{id}/password")
     @RequirePerm("iam:user:reset_pwd")
-    public Result<Void> resetPassword(@PathVariable Long id, @RequestBody java.util.Map<String, String> body) {
+    public Result<Void> resetPassword(@PathVariable("id") Long id, @RequestBody java.util.Map<String, String> body) {
         userService.resetPassword(id, body.get("password"));
         return Result.success();
     }
 
     @GetMapping("/{id}/factoryScopes")
     @RequirePerm("iam:user:query")
-    public Result<UserFactoryScopesDto> getFactoryScopes(@PathVariable Long id) {
+    public Result<UserFactoryScopesDto> getFactoryScopes(@PathVariable("id") Long id) {
         IamUser user = userService.get(id);
         if (user == null) return Result.error("User not found");
         List<Long> factoryIds = dataScopeService.getUserFactoryScopeIds(id);
@@ -83,7 +83,7 @@ public class IamUserController {
 
     @PutMapping("/{id}/factoryScopes")
     @RequirePerm("iam:user:update")
-    public Result<Void> putFactoryScopes(@PathVariable Long id, @RequestBody UserFactoryScopesDto dto) {
+    public Result<Void> putFactoryScopes(@PathVariable("id") Long id, @RequestBody UserFactoryScopesDto dto) {
         IamUser user = userService.get(id);
         if (user == null) return Result.error("User not found");
         dataScopeService.setUserFactoryScopes(id, dto.getFactoryIds());
@@ -92,7 +92,7 @@ public class IamUserController {
 
     @GetMapping("/{id}/roles")
     @RequirePerm("iam:user:query")
-    public Result<java.util.List<Long>> getRoleIds(@PathVariable Long id) {
+    public Result<java.util.List<Long>> getRoleIds(@PathVariable("id") Long id) {
         IamUser user = userService.get(id);
         if (user == null) return Result.error("User not found");
         return Result.success(userService.getRoleIds(id));
@@ -100,7 +100,7 @@ public class IamUserController {
 
     @PutMapping("/{id}/roles")
     @RequirePerm("iam:user:update")
-    public Result<Void> putRoleIds(@PathVariable Long id, @RequestBody java.util.Map<String, java.util.List<Long>> body) {
+    public Result<Void> putRoleIds(@PathVariable("id") Long id, @RequestBody java.util.Map<String, java.util.List<Long>> body) {
         IamUser user = userService.get(id);
         if (user == null) return Result.error("User not found");
         java.util.List<Long> roleIds = body != null ? body.get("roleIds") : null;
