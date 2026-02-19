@@ -35,7 +35,7 @@ class FulfillmentTest {
     }
 
     @Test
-    void createFromUnifiedOrder_orderNotValidated_throws() {
+    void createFromUnifiedOrder_orderNew_succeeds() {
         UnifiedOrder order = new UnifiedOrder();
         order.setId(100L);
         order.setOrderStatus("NEW");
@@ -44,10 +44,23 @@ class FulfillmentTest {
         item.setId(1L);
         item.setSkuId(10L);
         item.setQuantity(1);
+        Fulfillment f = Fulfillment.createFromUnifiedOrder(order, List.of(item));
+        assertEquals(FulfillmentStatus.CREATED.name(), f.getStatus());
+    }
 
+    @Test
+    void createFromUnifiedOrder_orderInvalidStatus_throws() {
+        UnifiedOrder order = new UnifiedOrder();
+        order.setId(100L);
+        order.setOrderStatus("CANCELLED");
+        order.setUnifiedOrderNo("ORD-001");
+        UnifiedOrderItem item = new UnifiedOrderItem();
+        item.setId(1L);
+        item.setSkuId(10L);
+        item.setQuantity(1);
         BusinessException ex = assertThrows(BusinessException.class, () ->
                 Fulfillment.createFromUnifiedOrder(order, List.of(item)));
-        assertEquals("Order must be VALIDATED before fulfillment", ex.getMessage().split("\\. Current")[0]);
+        assertEquals("Order must be NEW or VALIDATED before fulfillment", ex.getMessage().split("\\. Current")[0]);
     }
 
     @Test
@@ -77,7 +90,7 @@ class FulfillmentTest {
         f.setItems(List.of(new FulfillmentItem()));
 
         BusinessException ex = assertThrows(BusinessException.class, f::release);
-        assertEquals("Fulfillment can only be released from CREATED", ex.getMessage().split("\\. Current")[0]);
+        assertEquals("Fulfillment can only be released from CREATED or RESERVED", ex.getMessage().split("\\. Current")[0]);
     }
 
     @Test
@@ -120,5 +133,29 @@ class FulfillmentTest {
         f.setItems(List.of(new FulfillmentItem()));
         f.confirm();
         assertEquals(FulfillmentStatus.RELEASED.name(), f.getStatus());
+    }
+
+    @Test
+    void markReserved_created_succeeds() {
+        Fulfillment f = new Fulfillment();
+        f.setStatus(FulfillmentStatus.CREATED.name());
+        f.markReserved();
+        assertEquals(FulfillmentStatus.RESERVED.name(), f.getStatus());
+    }
+
+    @Test
+    void markHoldInventory_created_succeeds() {
+        Fulfillment f = new Fulfillment();
+        f.setStatus(FulfillmentStatus.CREATED.name());
+        f.markHoldInventory();
+        assertEquals(FulfillmentStatus.HOLD_INVENTORY.name(), f.getStatus());
+    }
+
+    @Test
+    void cancel_reserved_succeeds() {
+        Fulfillment f = new Fulfillment();
+        f.setStatus(FulfillmentStatus.RESERVED.name());
+        f.cancel();
+        assertEquals(FulfillmentStatus.CANCELLED.name(), f.getStatus());
     }
 }

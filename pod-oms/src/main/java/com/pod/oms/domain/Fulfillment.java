@@ -19,6 +19,9 @@ public class Fulfillment extends BaseEntity {
 
     private String fulfillmentNo;
     private Long unifiedOrderId;
+    private String channel;
+    private Long shopId;
+    private String externalOrderId;
     private String fulfillmentType;
     private String status;
     private Integer priority;
@@ -41,8 +44,11 @@ public class Fulfillment extends BaseEntity {
         if (order == null) {
             throw new BusinessException("Order cannot be null");
         }
-        if (!"VALIDATED".equals(order.getOrderStatus())) {
-            throw new BusinessException("Order must be VALIDATED before fulfillment. Current: " + order.getOrderStatus());
+        if (order.getOrderStatus() == null || order.getOrderStatus().isEmpty()) {
+            throw new BusinessException("Order status required");
+        }
+        if (!"VALIDATED".equals(order.getOrderStatus()) && !"NEW".equals(order.getOrderStatus())) {
+            throw new BusinessException("Order must be NEW or VALIDATED before fulfillment. Current: " + order.getOrderStatus());
         }
         if (orderItems == null || orderItems.isEmpty()) {
             throw new BusinessException("Order must have at least one item to create fulfillment");
@@ -52,6 +58,9 @@ public class Fulfillment extends BaseEntity {
         Fulfillment f = new Fulfillment();
         f.setFulfillmentNo(fulfillmentNo);
         f.setUnifiedOrderId(order.getId());
+        f.setChannel(order.getChannel());
+        f.setShopId(order.getShopId());
+        f.setExternalOrderId(order.getExternalOrderId());
         f.setFulfillmentType("POD");
         f.setStatus(FulfillmentStatus.CREATED.name());
         f.setPriority(100);
@@ -95,7 +104,26 @@ public class Fulfillment extends BaseEntity {
     }
 
     /**
-     * 释放到仓库（CREATED -> RELEASED）：状态前置校验 + 行项目非空。
+     * 预占成功：CREATED -> RESERVED 或 HOLD_INVENTORY -> RESERVED。
+     */
+    public void markReserved() {
+        FulfillmentStatus.from(this.status).requireAllowReserve();
+        this.status = FulfillmentStatus.RESERVED.name();
+    }
+
+    /**
+     * 预占失败（库存不足）：CREATED -> HOLD_INVENTORY。
+     */
+    public void markHoldInventory() {
+        FulfillmentStatus current = FulfillmentStatus.from(this.status);
+        if (!FulfillmentStatus.CREATED.equals(current) && !FulfillmentStatus.HOLD_INVENTORY.equals(current)) {
+            throw new BusinessException("Cannot set HOLD_INVENTORY from " + this.status);
+        }
+        this.status = FulfillmentStatus.HOLD_INVENTORY.name();
+    }
+
+    /**
+     * 释放到仓库（CREATED | RESERVED -> RELEASED）：状态前置校验。
      */
     public void release() {
         FulfillmentStatus current = FulfillmentStatus.from(this.status);
@@ -105,14 +133,20 @@ public class Fulfillment extends BaseEntity {
     }
 
     /**
-     * 取消履约（CREATED | RELEASED -> CANCELLED）。
+     * P1.3：全部行生产图就绪后，RESERVED -> ART_READY。
+     */
+    public void markArtReady() {
+        FulfillmentStatus.from(this.status).requireAllowArtReady();
+        this.status = FulfillmentStatus.ART_READY.name();
+    }
+
+    /**
+     * 取消履约（CREATED | RESERVED | ART_READY | HOLD_INVENTORY | RELEASED -> CANCELLED）。
      */
     public void cancel() {
         FulfillmentStatus current = FulfillmentStatus.from(this.status);
         current.requireAllowCancel();
-        if (FulfillmentStatus.CANCELLED.equals(current)) {
-            return;
-        }
+        if (FulfillmentStatus.CANCELLED.equals(current)) return;
         this.status = FulfillmentStatus.CANCELLED.name();
     }
 
@@ -128,6 +162,12 @@ public class Fulfillment extends BaseEntity {
     public void setFulfillmentNo(String fulfillmentNo) { this.fulfillmentNo = fulfillmentNo; }
     public Long getUnifiedOrderId() { return unifiedOrderId; }
     public void setUnifiedOrderId(Long unifiedOrderId) { this.unifiedOrderId = unifiedOrderId; }
+    public String getChannel() { return channel; }
+    public void setChannel(String channel) { this.channel = channel; }
+    public Long getShopId() { return shopId; }
+    public void setShopId(Long shopId) { this.shopId = shopId; }
+    public String getExternalOrderId() { return externalOrderId; }
+    public void setExternalOrderId(String externalOrderId) { this.externalOrderId = externalOrderId; }
     public String getFulfillmentType() { return fulfillmentType; }
     public void setFulfillmentType(String fulfillmentType) { this.fulfillmentType = fulfillmentType; }
     public String getStatus() { return status; }

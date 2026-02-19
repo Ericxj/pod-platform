@@ -10,6 +10,8 @@ public class FulfillmentItem extends BaseEntity {
     private Integer lineNo;
     private Long skuId;
     private Integer qty;
+    private Integer reservedQty;
+    private String reserveStatus;
     private String status;
     private String personalizationJson;
 
@@ -23,6 +25,10 @@ public class FulfillmentItem extends BaseEntity {
     public void setSkuId(Long skuId) { this.skuId = skuId; }
     public Integer getQty() { return qty; }
     public void setQty(Integer qty) { this.qty = qty; }
+    public Integer getReservedQty() { return reservedQty; }
+    public void setReservedQty(Integer reservedQty) { this.reservedQty = reservedQty; }
+    public String getReserveStatus() { return reserveStatus; }
+    public void setReserveStatus(String reserveStatus) { this.reserveStatus = reserveStatus; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
     public String getPersonalizationJson() { return personalizationJson; }

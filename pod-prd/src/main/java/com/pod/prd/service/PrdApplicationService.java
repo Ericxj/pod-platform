@@ -357,6 +357,15 @@ public class PrdApplicationService {
     }
 
     // ---- SkuMapping ----
+    /** OMS 拉单解析用：按渠道/店铺/外部SKU 查映射，无则返回 null */
+    public SkuMapping findSkuMappingByExternal(String channel, String shopId, String externalSku) {
+        if (channel == null || externalSku == null) return null;
+        LambdaQueryWrapper<SkuMapping> q = new LambdaQueryWrapper<>();
+        q.eq(SkuMapping::getTenantId, tenantId()).eq(SkuMapping::getFactoryId, factoryId()).eq(SkuMapping::getDeleted, 0)
+          .eq(SkuMapping::getChannel, channel).eq(SkuMapping::getShopId, shopId != null ? shopId : "").eq(SkuMapping::getExternalSku, externalSku);
+        return skuMappingMapper.selectOne(q);
+    }
+
     public IPage<SkuMapping> pageSkuMapping(Page<SkuMapping> page, String channel, String shopId, String externalSku, String skuCode) {
         LambdaQueryWrapper<SkuMapping> q = new LambdaQueryWrapper<>();
         q.eq(SkuMapping::getTenantId, tenantId()).eq(SkuMapping::getFactoryId, factoryId()).eq(SkuMapping::getDeleted, 0);

@@ -15,6 +15,8 @@ public class UnifiedOrder extends BaseEntity {
 
     private String unifiedOrderNo;
     private String platformCode;
+    private String channel;
+    private String externalOrderId;
     private Long shopId;
     private String platformOrderId;
     private String platformOrderNo;
@@ -69,6 +71,10 @@ public class UnifiedOrder extends BaseEntity {
     public void setUnifiedOrderNo(String unifiedOrderNo) { this.unifiedOrderNo = unifiedOrderNo; }
     public String getPlatformCode() { return platformCode; }
     public void setPlatformCode(String platformCode) { this.platformCode = platformCode; }
+    public String getChannel() { return channel; }
+    public void setChannel(String channel) { this.channel = channel; }
+    public String getExternalOrderId() { return externalOrderId; }
+    public void setExternalOrderId(String externalOrderId) { this.externalOrderId = externalOrderId; }
     public Long getShopId() { return shopId; }
     public void setShopId(Long shopId) { this.shopId = shopId; }
     public String getPlatformOrderId() { return platformOrderId; }

@@ -389,7 +389,7 @@ CREATE TABLE IF NOT EXISTS `oms_fulfillment_item` (
   UNIQUE INDEX `uk_fulfillment_line`(`tenant_id`, `fulfillment_id`, `line_no`)
 );
 
--- art_job
+-- art_job (P1.3: fulfillment_line_id, retry_count, last_error_*, uk_line)
 CREATE TABLE IF NOT EXISTS `art_job` (
   `id` bigint NOT NULL,
   `tenant_id` bigint NOT NULL,
@@ -403,12 +403,16 @@ CREATE TABLE IF NOT EXISTS `art_job` (
   `trace_id` varchar(64),
   `art_job_no` varchar(64) NOT NULL,
   `fulfillment_id` bigint NOT NULL,
+  `fulfillment_line_id` bigint,
   `template_id` bigint,
   `status` varchar(32) NOT NULL,
   `priority` int NOT NULL DEFAULT 100,
+  `retry_count` int NOT NULL DEFAULT 0,
+  `last_error_code` varchar(64),
+  `last_error_msg` varchar(512),
   PRIMARY KEY (`id`),
   UNIQUE INDEX `uk_art_job_no`(`tenant_id`, `art_job_no`),
-  UNIQUE INDEX `uk_art_fulfillment`(`tenant_id`, `fulfillment_id`)
+  UNIQUE INDEX `uk_line`(`tenant_id`, `factory_id`, `fulfillment_id`, `fulfillment_line_id`)
 );
 
 -- art_render_task
@@ -432,7 +436,7 @@ CREATE TABLE IF NOT EXISTS `art_render_task` (
   PRIMARY KEY (`id`)
 );
 
--- art_production_file
+-- art_production_file (P1.3: file_hash, format, uk_hash)
 CREATE TABLE IF NOT EXISTS `art_production_file` (
   `id` bigint NOT NULL,
   `tenant_id` bigint NOT NULL,
@@ -446,10 +450,16 @@ CREATE TABLE IF NOT EXISTS `art_production_file` (
   `trace_id` varchar(64),
   `art_job_id` bigint NOT NULL,
   `file_no` varchar(64) NOT NULL,
+  `file_hash` varchar(64),
   `file_type` varchar(32) NOT NULL,
+  `format` varchar(16),
   `file_url` varchar(512) NOT NULL,
+  `width_px` int,
+  `height_px` int,
+  `dpi` int,
   `status` varchar(32) NOT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `uk_hash`(`tenant_id`, `factory_id`, `file_hash`(64))
 );
 
 -- mes_work_order

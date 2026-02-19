@@ -6,23 +6,36 @@ import java.util.Set;
 
 /**
  * Fulfillment 状态枚举与合法迁移矩阵。
- * CREATED -> RELEASED | CANCELLED
- * RELEASED -> CANCELLED（可选，业务允许时可关闭已释放单）
- * CANCELLED -> 终态
+ * CREATED -> RESERVED | HOLD_INVENTORY | CANCELLED
+ * RESERVED -> ART_READY | CANCELLED  (P1.3: 全部 line 生产图 READY 后推进)
+ * ART_READY -> CANCELLED
+ * HOLD_INVENTORY -> RESERVED | CANCELLED（retryReserve 后可到 RESERVED）
+ * RELEASED 保留兼容；CANCELLED 终态
  */
 public enum FulfillmentStatus {
 
     CREATED,
+    RESERVED,
+    ART_READY,
+    HOLD_INVENTORY,
     RELEASED,
     CANCELLED;
 
-    private static final Set<FulfillmentStatus> ALLOW_RELEASE = EnumSet.of(CREATED);
-    private static final Set<FulfillmentStatus> ALLOW_CANCEL = EnumSet.of(CREATED, RELEASED);
+    private static final Set<FulfillmentStatus> ALLOW_RESERVE = EnumSet.of(CREATED, HOLD_INVENTORY);
+    private static final Set<FulfillmentStatus> ALLOW_RELEASE = EnumSet.of(CREATED, RESERVED);
+    private static final Set<FulfillmentStatus> ALLOW_CANCEL = EnumSet.of(CREATED, RESERVED, ART_READY, HOLD_INVENTORY, RELEASED);
     private static final Set<FulfillmentStatus> ALLOW_CONFIRM = EnumSet.of(CREATED);
+    private static final Set<FulfillmentStatus> ALLOW_ART_READY = EnumSet.of(RESERVED);
+
+    public void requireAllowReserve() {
+        if (!ALLOW_RESERVE.contains(this)) {
+            throw new BusinessException("Fulfillment can only reserve from CREATED or HOLD_INVENTORY. Current: " + this);
+        }
+    }
 
     public void requireAllowRelease() {
         if (!ALLOW_RELEASE.contains(this)) {
-            throw new BusinessException("Fulfillment can only be released from CREATED. Current: " + this);
+            throw new BusinessException("Fulfillment can only be released from CREATED or RESERVED. Current: " + this);
         }
     }
 
@@ -35,6 +48,12 @@ public enum FulfillmentStatus {
     public void requireAllowConfirm() {
         if (!ALLOW_CONFIRM.contains(this)) {
             throw new BusinessException("Fulfillment can only be confirmed from CREATED. Current: " + this);
+        }
+    }
+
+    public void requireAllowArtReady() {
+        if (!ALLOW_ART_READY.contains(this)) {
+            throw new BusinessException("Fulfillment can only move to ART_READY from RESERVED. Current: " + this);
         }
     }
 

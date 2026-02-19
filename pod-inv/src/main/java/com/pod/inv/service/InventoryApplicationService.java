@@ -115,4 +115,32 @@ public class InventoryApplicationService {
          wrapper.orderByDesc(InventoryLedger::getCreatedAt);
          return ledgerMapper.selectPage(page, wrapper);
     }
+
+    /**
+     * 释放指定业务单号下的全部预占（bizType+bizNo）。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void releaseByBiz(String bizType, String bizNo) {
+        Long tenantId = TenantContext.getTenantId();
+        Long factoryId = TenantContext.getFactoryId();
+        LambdaQueryWrapper<InventoryReservation> q = new LambdaQueryWrapper<>();
+        q.eq(InventoryReservation::getBizType, bizType).eq(InventoryReservation::getBizNo, bizNo)
+         .eq(InventoryReservation::getTenantId, tenantId).eq(InventoryReservation::getFactoryId, factoryId)
+         .eq(InventoryReservation::getDeleted, 0).eq(InventoryReservation::getStatus, "RESERVED");
+        List<InventoryReservation> list = reservationMapper.selectList(q);
+        for (InventoryReservation res : list) {
+            LambdaQueryWrapper<InventoryBalance> bq = new LambdaQueryWrapper<>();
+            bq.eq(InventoryBalance::getWarehouseId, res.getWarehouseId()).eq(InventoryBalance::getSkuId, res.getSkuId())
+              .eq(InventoryBalance::getTenantId, tenantId).eq(InventoryBalance::getFactoryId, factoryId).eq(InventoryBalance::getDeleted, 0);
+            InventoryBalance balance = balanceMapper.selectOne(bq);
+            if (balance == null) continue;
+            int qty = res.getQty() != null ? res.getQty() : 0;
+            if (qty <= 0) continue;
+            balance.release(qty);
+            int rows = balanceMapper.updateBalanceWithVersion(balance.getId(), balance.getAllocatedQty(), balance.getAvailableQty(), balance.getVersion(), tenantId, factoryId);
+            if (rows == 0) throw new BusinessException("Inventory concurrency conflict on release. Please retry.");
+            res.release();
+            reservationMapper.updateById(res);
+        }
+    }
 }
