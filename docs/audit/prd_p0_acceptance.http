@@ -1,0 +1,108 @@
+### 商品域 P0 验收 - 请替换 {{baseUrl}}、{{token}}、{{tenantId}}、{{factoryId}} 及 SPU/SKU/BOM/Routing ID
+### 变量示例：baseUrl=http://localhost:8080, token=eyJ..., tenantId=1, factoryId=1
+@baseUrl = http://localhost:8080
+@token = your-jwt-token
+@tenantId = 1
+@factoryId = 1
+@requestId = req-prd-001
+
+### 1. 创建 SPU
+# @name createSpu
+POST {{baseUrl}}/api/prd/spu
+Content-Type: application/json
+X-Request-Id: {{requestId}}-spu
+X-Tenant-Id: {{tenantId}}
+X-Factory-Id: {{factoryId}}
+Authorization: Bearer {{token}}
+
+{"spuCode":"SPU-TSHIRT","spuName":"POD T-Shirt","categoryCode":"APPAREL","brand":"DEMO"}
+
+### 2. 创建 SKU（将 spuId 改为上一步返回的 id）
+# @name createSku
+POST {{baseUrl}}/api/prd/sku
+Content-Type: application/json
+X-Request-Id: req-prd-002-sku
+X-Tenant-Id: {{tenantId}}
+X-Factory-Id: {{factoryId}}
+Authorization: Bearer {{token}}
+
+{"spuId":3001,"skuCode":"TSHIRT-001-WHITE-M","skuName":"T-Shirt White M","price":19.99,"weightG":200,"attributesJson":"{\"size\":\"M\",\"color\":\"white\"}"}
+
+### 3. 加条码（将 skuId 改为上一步返回的 id）
+POST {{baseUrl}}/api/prd/barcode/batchAdd
+Content-Type: application/json
+X-Request-Id: req-prd-003-bc
+X-Tenant-Id: {{tenantId}}
+X-Factory-Id: {{factoryId}}
+Authorization: Bearer {{token}}
+
+{"skuId":4001,"barcodes":["BC1234567890"],"barcodeType":"EAN","isPrimary":1}
+
+### 4. 配 BOM 两行（skuId 同上；materialId 需存在）
+POST {{baseUrl}}/api/prd/bom/save
+Content-Type: application/json
+X-Request-Id: req-prd-004-bom
+X-Tenant-Id: {{tenantId}}
+X-Factory-Id: {{factoryId}}
+Authorization: Bearer {{token}}
+
+{"skuId":4001,"versionNo":1,"remark":"P0 BOM","items":[{"materialId":5001,"qty":1.5,"uom":"PCS","lossRate":0,"sortNo":1},{"materialId":5002,"qty":0.2,"uom":"M","lossRate":0.01,"sortNo":2}]}
+
+### 5. 发布 BOM（将 bomId 改为上一步返回的 id）
+POST {{baseUrl}}/api/prd/bom/5001/publish
+X-Request-Id: req-prd-005-pub
+X-Tenant-Id: {{tenantId}}
+X-Factory-Id: {{factoryId}}
+Authorization: Bearer {{token}}
+
+### 6. 配工艺路线 3 步
+POST {{baseUrl}}/api/prd/routing/save
+Content-Type: application/json
+X-Request-Id: req-prd-006-rout
+X-Tenant-Id: {{tenantId}}
+X-Factory-Id: {{factoryId}}
+Authorization: Bearer {{token}}
+
+{"skuId":4001,"versionNo":1,"steps":[{"stepNo":1,"opCode":"PRINT","opName":"印花","stdCycleSeconds":60,"qcRequired":0},{"stepNo":2,"opCode":"CUT","opName":"裁剪","stdCycleSeconds":30,"qcRequired":0},{"stepNo":3,"opCode":"PACK","opName":"包装","stdCycleSeconds":15,"qcRequired":1}]}
+
+### 7. 发布工艺路线（将 routingId 改为上一步返回的 id）
+POST {{baseUrl}}/api/prd/routing/6001/publish
+X-Request-Id: req-prd-007-pub
+X-Tenant-Id: {{tenantId}}
+X-Factory-Id: {{factoryId}}
+Authorization: Bearer {{token}}
+
+### 8. 激活 SKU（将 skuId 改为创建 SKU 返回的 id）
+POST {{baseUrl}}/api/prd/sku/4001/activate
+X-Request-Id: req-prd-008-act
+X-Tenant-Id: {{tenantId}}
+X-Factory-Id: {{factoryId}}
+Authorization: Bearer {{token}}
+
+### 9. 绑定 Amazon 映射（skuCode 为已激活的 SKU 编码）
+POST {{baseUrl}}/api/prd/mapping
+Content-Type: application/json
+X-Request-Id: req-prd-009-map
+X-Tenant-Id: {{tenantId}}
+X-Factory-Id: {{factoryId}}
+Authorization: Bearer {{token}}
+
+{"channel":"AMAZON","shopId":"xxx","externalSku":"AMZ-SELLER-001","externalName":"Amazon listing","skuCode":"TSHIRT-001-WHITE-M","remark":"P0 mapping"}
+
+### 10. 查询 SPU 分页（验证 tenant/factory 过滤）
+GET {{baseUrl}}/api/prd/spu/page?current=1&size=10
+X-Tenant-Id: {{tenantId}}
+X-Factory-Id: {{factoryId}}
+Authorization: Bearer {{token}}
+
+### 11. 查询 SKU 分页
+GET {{baseUrl}}/api/prd/sku/page?current=1&size=10
+X-Tenant-Id: {{tenantId}}
+X-Factory-Id: {{factoryId}}
+Authorization: Bearer {{token}}
+
+### 12. 查询映射分页
+GET {{baseUrl}}/api/prd/mapping/page?current=1&size=10
+X-Tenant-Id: {{tenantId}}
+X-Factory-Id: {{factoryId}}
+Authorization: Bearer {{token}}

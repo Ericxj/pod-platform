@@ -94,15 +94,15 @@ function convertRoutes(
 }
 
 function normalizeViewPath(path: string): string {
+  // 统一为正向斜杠（Windows glob 可能返回 \）
+  const slash = path.replace(/\\/g, '/');
   // 去除相对路径前缀
-  const normalizedPath = path.replace(/^(\.\/|\.\.\/)+/, '');
-
+  const normalizedPath = slash.replace(/^(\.\/|\.\.\/)+/, '');
   // 确保路径以 '/' 开头
   const viewPath = normalizedPath.startsWith('/')
     ? normalizedPath
     : `/${normalizedPath}`;
-
-  // 这里耦合了vben-admin的目录结构
+  // 这里耦合了 vben-admin 的目录结构
   return viewPath.replace(/^\/views/, '');
 }
 export { generateRoutesByBackend };

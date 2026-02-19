@@ -21,27 +21,35 @@ const forbiddenComponent = () => import('#/views/_core/fallback/forbidden.vue');
 
 /** 与 @vben/utils generate-routes-backend 中 normalizeViewPath 一致，用于匹配 pageMap 键 */
 function normalizeViewPathForMatch(path: string): string {
-  const normalizedPath = path.replace(/^(\.\/|\.\.\/)+/, '');
+  const slash = path.replace(/\\/g, '/');
+  const normalizedPath = slash.replace(/^(\.\/|\.\.\/)+/, '');
   const viewPath = normalizedPath.startsWith('/') ? normalizedPath : `/${normalizedPath}`;
   return viewPath.replace(/^\/views/, '');
 }
 
 /**
- * 归一化后端 component：
- * - trim
+ * 归一化后端 component（用于 resolve 与 generateRoutesByBackend 一致）：
+ * - trim、去掉前导/尾随 '/'、去掉 .vue
  * - LAYOUT -> 'Layout'
- * - 去掉前导 '/'：'/system/user/index' -> 'system/user/index'
+ * - 避免重复斜杠：'/inv/balance/index' -> 'inv/balance/index'
  */
 export function normalizeComponent(raw: string | undefined): string {
   if (!raw || typeof raw !== 'string') return raw ?? '';
-  const t = raw.trim();
+  let t = raw.trim().replace(/\\/g, '/');
+  if (!t) return '';
   if (t.toUpperCase() === 'LAYOUT') return 'Layout';
-  return t.startsWith('/') ? t.slice(1) : t;
+  if (t.toUpperCase() === 'IFRAMEVIEW') return 'IFrameView';
+  while (t.startsWith('/')) t = t.slice(1);
+  while (t.endsWith('/')) t = t.slice(0, -1);
+  if (t.toLowerCase().endsWith('.vue')) t = t.slice(0, -4);
+  t = t.replace(/\/+/g, '/');
+  return t;
 }
 
 /**
- * 解析视图 component：用 import.meta.glob 的 pageMap 精确匹配，找不到则抛出含期望 key 的错误
- * 支持 ${comp}.vue 与 ${comp}/index.vue（与 generate-routes-backend 查找的 key 一致）
+ * 解析视图 component：用 import.meta.glob 的 pageMap 精确匹配，找不到则抛出含候选 key 的错误
+ * 兼容：'/inv/balance/index'、'/inv/balance/index.vue'、'/inv/balance/index/index'
+ * 优先级：/{path}.vue -> /{path}/index.vue
  */
 export function resolveView(
   component: string,
@@ -51,28 +59,43 @@ export function resolveView(
   const normalized = normalizeComponent(component || raw);
   if (!normalized) return;
 
-  const expectedKey = `${normalized.endsWith('.vue') ? normalized : `${normalized}.vue`}`;
-  const expectedNormalized = expectedKey.startsWith('/') ? expectedKey : `/${expectedKey}`;
-
   const normalizedToOriginal: Record<string, string> = {};
   for (const key of Object.keys(pageMap)) {
     const n = normalizeViewPathForMatch(key);
     normalizedToOriginal[n] = key;
   }
 
-  if (import.meta.env.DEV && Object.keys(normalizedToOriginal).length > 0) {
-    const sample = Object.keys(normalizedToOriginal).slice(0, 3).join(', ');
-    console.info('[Access] pageMap sample keys (normalized):', sample);
+  const candidates: string[] = [
+    normalized.endsWith('.vue') ? `/${normalized}` : `/${normalized}.vue`,
+    normalized.endsWith('.vue') ? `/${normalized.replace(/\.vue$/, '')}/index.vue` : `/${normalized}/index.vue`,
+  ];
+  for (const cand of candidates) {
+    if (normalizedToOriginal[cand]) return;
   }
 
-  if (normalizedToOriginal[expectedNormalized]) return;
-  const withIndex = expectedNormalized.replace(/\.vue$/, '/index.vue');
-  if (normalizedToOriginal[withIndex]) return;
-
-  const expectedKeys = `"${expectedNormalized}" or "${withIndex}" (views path: ${normalized})`;
+  const allKeys = Object.keys(normalizedToOriginal).sort();
+  const segment = normalized.split('/')[0] ?? normalized;
+  const candidateKeys = allKeys.filter((k) => k.includes(segment)).slice(0, 15);
+  const hint = candidateKeys.length > 0
+    ? `; candidate keys: ${candidateKeys.join(', ')}`
+    : `; pageMap keys (sample): ${allKeys.slice(0, 10).join(', ')}`;
   throw new Error(
-    `View component not found: ${raw ?? component} -> ${normalized} (expected key: ${expectedKeys})`,
+    `View component not found: ${raw ?? component} -> ${normalized} (tried: ${candidates.join(', ')})${hint}`,
   );
+}
+
+/** 在 generateRoutesByBackend 前对 menus 的 component 做归一化：去前导 /、去 .vue、去重复斜杠 */
+function normalizeMenuComponents(menus: any[]) {
+  menus.forEach((menu) => {
+    if (menu.children?.length) {
+      normalizeMenuComponents(menu.children);
+      return;
+    }
+    if (menu.component && typeof menu.component === 'string' && menu.component.trim()) {
+      const n = normalizeComponent(menu.component);
+      if (n) menu.component = n;
+    }
+  });
 }
 
 /**
@@ -174,6 +197,8 @@ async function generateAccess(options: GenerateMenuAndRoutesOptions) {
         if (import.meta.env.DEV) console.warn('[Access] No menus from backend.');
         return [];
       }
+
+      normalizeMenuComponents(menus);
 
       try {
         resolveComponentFallback(menus, pageMap);

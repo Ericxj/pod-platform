@@ -17,7 +17,7 @@ public class InventoryController {
     @Autowired
     private InventoryApplicationService inventoryService;
 
-    @GetMapping("/balances/page")
+    @GetMapping("/balances")
     public Result<IPage<InventoryBalance>> pageBalances(
             @RequestParam(required = false) Long warehouseId,
             @RequestParam(required = false) Long skuId,
@@ -26,7 +26,7 @@ public class InventoryController {
         return Result.success(inventoryService.pageBalances(new Page<>(page, size), warehouseId, skuId));
     }
 
-    @GetMapping("/reservations/page")
+    @GetMapping("/reservations")
     public Result<IPage<InventoryReservation>> pageReservations(
             @RequestParam(required = false) String bizNo,
             @RequestParam(required = false) Long skuId,
@@ -35,7 +35,7 @@ public class InventoryController {
         return Result.success(inventoryService.pageReservations(new Page<>(page, size), bizNo, skuId));
     }
 
-    @GetMapping("/ledgers/page")
+    @GetMapping("/ledgers")
     public Result<IPage<InventoryLedger>> pageLedgers(
             @RequestParam(required = false) Long skuId,
             @RequestParam(defaultValue = "1") Integer page,
