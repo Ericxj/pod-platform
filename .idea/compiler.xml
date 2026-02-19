@@ -7,17 +7,18 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="pod-art" />
-        <module name="pod-integration" />
-        <module name="pod-inv" />
-        <module name="pod-iam" />
-        <module name="pod-oms" />
+        <module name="pod-prd" />
         <module name="pod-mes" />
-        <module name="pod-ai" />
         <module name="pod-common" />
         <module name="pod-tms" />
         <module name="pod-start" />
         <module name="pod-wms" />
         <module name="pod-infra" />
+        <module name="pod-integration" />
+        <module name="pod-inv" />
+        <module name="pod-iam" />
+        <module name="pod-oms" />
+        <module name="pod-ai" />
       </profile>
     </annotationProcessing>
   </component>
@@ -33,6 +34,7 @@
       <module name="pod-mes" options="-parameters" />
       <module name="pod-oms" options="-parameters" />
       <module name="pod-platform" options="-parameters" />
+      <module name="pod-prd" options="-parameters" />
       <module name="pod-start" options="-parameters" />
       <module name="pod-tms" options="-parameters" />
       <module name="pod-wms" options="-parameters" />

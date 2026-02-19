@@ -48,7 +48,11 @@
             <groupId>com.pod</groupId>
             <artifactId>pod-ai</artifactId>
         </dependency>
-        
+        <dependency>
+            <groupId>com.pod</groupId>
+            <artifactId>pod-prd</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

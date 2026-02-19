@@ -11,7 +11,7 @@
  Target Server Version : 80300 (8.3.0)
  File Encoding         : 65001
 
- Date: 14/02/2026 13:55:20
+ Date: 19/02/2026 19:39:58
 */
 
 SET NAMES utf8mb4;
@@ -2118,6 +2118,9 @@ INSERT INTO `iam_permission` VALUES (900, 1, 1, '2026-02-14 09:42:01.000', '2026
 INSERT INTO `iam_permission` VALUES (901, 1, 1, '2026-02-14 09:42:01.000', '2026-02-14 09:42:01.000', 0, 1, NULL, NULL, NULL, 'sys:user:list', '用户管理', 'MENU', '/system/user', '/system/user/index', NULL, NULL, NULL, NULL, 900, 1, 'ENABLED', 0, 1, 0);
 INSERT INTO `iam_permission` VALUES (902, 1, 1, '2026-02-14 13:50:14.486', '2026-02-14 13:50:14.486', 0, 1, NULL, NULL, NULL, 'sys:role:list', '角色管理', 'MENU', '/system/role', '/system/role/index', NULL, NULL, NULL, NULL, 900, 2, 'ENABLED', 0, 1, 0);
 INSERT INTO `iam_permission` VALUES (903, 1, 1, '2026-02-14 13:50:14.488', '2026-02-14 13:50:14.488', 0, 1, NULL, NULL, NULL, 'sys:perm:list', '权限管理', 'MENU', '/system/permission', '/system/permission/index', NULL, NULL, NULL, NULL, 900, 4, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (904, 1, 0, '2026-02-14 16:22:49.735', '2026-02-14 16:22:49.735', 0, 1, NULL, NULL, NULL, 'sys:scope:list', '数据权限', 'MENU', '/system/data-scope', 'system/data-scope/index', NULL, NULL, NULL, NULL, 900, 3, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (905, 1, 0, '2026-02-14 16:22:49.735', '2026-02-14 16:22:49.735', 0, 1, NULL, NULL, NULL, 'sys:tenant:list', '租户', 'MENU', '/system/tenant', 'system/tenant/index', NULL, NULL, NULL, NULL, 900, 5, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (906, 1, 0, '2026-02-14 16:22:49.735', '2026-02-14 16:22:49.735', 0, 1, NULL, NULL, NULL, 'sys:factory:list', '工厂', 'MENU', '/system/factory', 'system/factory/index', NULL, NULL, NULL, NULL, 900, 6, 'ENABLED', 0, 1, 0);
 INSERT INTO `iam_permission` VALUES (90101, 1, 1, '2026-02-14 09:42:01.000', '2026-02-14 09:42:01.000', 0, 1, NULL, NULL, NULL, 'iam:user:list', '用户列表', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 901, 1, 'ENABLED', 0, 1, 0);
 INSERT INTO `iam_permission` VALUES (90102, 1, 1, '2026-02-14 09:42:01.000', '2026-02-14 09:42:01.000', 0, 1, NULL, NULL, NULL, 'iam:user:create', '新增用户', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 901, 2, 'ENABLED', 0, 1, 0);
 INSERT INTO `iam_permission` VALUES (90103, 1, 1, '2026-02-14 09:42:01.000', '2026-02-14 09:42:01.000', 0, 1, NULL, NULL, NULL, 'iam:user:update', '编辑用户', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 901, 3, 'ENABLED', 0, 1, 0);
@@ -2133,6 +2136,27 @@ INSERT INTO `iam_permission` VALUES (90301, 1, 1, '2026-02-14 13:50:14.488', '20
 INSERT INTO `iam_permission` VALUES (90302, 1, 1, '2026-02-14 13:50:14.488', '2026-02-14 13:50:14.488', 0, 1, NULL, NULL, NULL, 'iam:perm:create', '新增权限', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 903, 2, 'ENABLED', 0, 1, 0);
 INSERT INTO `iam_permission` VALUES (90303, 1, 1, '2026-02-14 13:50:14.488', '2026-02-14 13:50:14.488', 0, 1, NULL, NULL, NULL, 'iam:perm:update', '编辑权限', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 903, 3, 'ENABLED', 0, 1, 0);
 INSERT INTO `iam_permission` VALUES (90304, 1, 1, '2026-02-14 13:50:14.488', '2026-02-14 13:50:14.488', 0, 1, NULL, NULL, NULL, 'iam:perm:delete', '删除权限', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 903, 4, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (90401, 1, 0, '2026-02-14 16:23:14.676', '2026-02-14 16:23:14.676', 0, 1, NULL, NULL, NULL, 'iam:scope:query', '查询范围', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 904, 1, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (90402, 1, 0, '2026-02-14 16:23:14.676', '2026-02-14 16:23:14.676', 0, 1, NULL, NULL, NULL, 'iam:scope:update', '保存范围', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 904, 2, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (90501, 1, 0, '2026-02-14 16:23:14.676', '2026-02-14 16:23:14.676', 0, 1, NULL, NULL, NULL, 'iam:tenant:page', '租户列表', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 905, 1, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (90502, 1, 0, '2026-02-14 16:23:14.676', '2026-02-14 16:23:14.676', 0, 1, NULL, NULL, NULL, 'iam:tenant:create', '新增租户', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 905, 2, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (90503, 1, 0, '2026-02-14 16:23:14.676', '2026-02-14 16:23:14.676', 0, 1, NULL, NULL, NULL, 'iam:tenant:update', '编辑租户', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 905, 3, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (90504, 1, 0, '2026-02-14 16:23:14.676', '2026-02-14 16:23:14.676', 0, 1, NULL, NULL, NULL, 'iam:tenant:delete', '删除租户', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 905, 4, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (90601, 1, 0, '2026-02-14 16:23:14.676', '2026-02-14 16:23:14.676', 0, 1, NULL, NULL, NULL, 'iam:factory:page', '工厂列表', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 906, 1, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (90602, 1, 0, '2026-02-14 16:23:14.676', '2026-02-14 16:23:14.676', 0, 1, NULL, NULL, NULL, 'iam:factory:create', '新增工厂', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 906, 2, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (90603, 1, 0, '2026-02-14 16:23:14.676', '2026-02-14 16:23:14.676', 0, 1, NULL, NULL, NULL, 'iam:factory:update', '编辑工厂', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 906, 3, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (90604, 1, 0, '2026-02-14 16:23:14.676', '2026-02-14 16:23:14.676', 0, 1, NULL, NULL, NULL, 'iam:factory:delete', '删除工厂', 'BUTTON', NULL, NULL, NULL, NULL, NULL, NULL, 906, 4, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (91000, 1, 1, '2026-02-19 17:25:40.417', '2026-02-19 17:25:40.417', 0, 0, NULL, NULL, NULL, 'menu:inv', '库存', 'MENU', '/inv', 'LAYOUT', NULL, '/inv/balance', NULL, NULL, 0, 80, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (91001, 1, 1, '2026-02-19 17:25:40.417', '2026-02-19 17:25:40.417', 0, 0, NULL, NULL, NULL, 'menu:inv:balance', '库存余额', 'MENU', '/inv/balance', 'inv/balance/index', NULL, NULL, NULL, NULL, 91000, 1, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (91002, 1, 1, '2026-02-19 17:25:40.417', '2026-02-19 17:25:40.417', 0, 0, NULL, NULL, NULL, 'menu:inv:reservation', '库存预占', 'MENU', '/inv/reservations', 'inv/reservations/index', NULL, NULL, NULL, NULL, 91000, 2, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (91003, 1, 1, '2026-02-19 17:25:40.417', '2026-02-19 17:25:40.417', 0, 0, NULL, NULL, NULL, 'menu:inv:ledger', '库存台账', 'MENU', '/inv/ledgers', 'inv/ledgers/index', NULL, NULL, NULL, NULL, 91000, 3, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (91010, 1, 1, '2026-02-19 17:25:40.417', '2026-02-19 17:25:40.417', 0, 0, NULL, NULL, NULL, 'inv:balance:page', '余额分页', 'API', NULL, NULL, NULL, NULL, 'GET', '/api/inv/balances', 91001, 1, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (91011, 1, 1, '2026-02-19 17:25:40.417', '2026-02-19 17:25:40.417', 0, 0, NULL, NULL, NULL, 'inv:reservation:page', '预占分页', 'API', NULL, NULL, NULL, NULL, 'GET', '/api/inv/reservations', 91002, 1, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (91012, 1, 1, '2026-02-19 17:25:40.417', '2026-02-19 17:25:40.417', 0, 0, NULL, NULL, NULL, 'inv:ledger:page', '台账分页', 'API', NULL, NULL, NULL, NULL, 'GET', '/api/inv/ledgers', 91003, 1, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (91020, 1, 1, '2026-02-19 17:25:40.417', '2026-02-19 17:25:40.417', 0, 0, NULL, NULL, NULL, 'inv:reserve', '预占', 'API', NULL, NULL, NULL, NULL, 'POST', '/api/inv/reservations', 91002, 2, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (91021, 1, 1, '2026-02-19 17:25:40.417', '2026-02-19 17:25:40.417', 0, 0, NULL, NULL, NULL, 'inv:release', '释放', 'API', NULL, NULL, NULL, NULL, 'POST', '/api/inv/reservations/release', 91002, 3, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (91022, 1, 1, '2026-02-19 17:25:40.417', '2026-02-19 17:25:40.417', 0, 0, NULL, NULL, NULL, 'inv:consume', '核销', 'API', NULL, NULL, NULL, NULL, 'POST', '/api/inv/consumeReserved', 91002, 4, 'ENABLED', 0, 1, 0);
+INSERT INTO `iam_permission` VALUES (91023, 1, 1, '2026-02-19 17:25:40.417', '2026-02-19 17:25:40.417', 0, 0, NULL, NULL, NULL, 'inv:adjust', '调整', 'API', NULL, NULL, NULL, NULL, 'POST', '/api/inv/adjust', 91001, 2, 'ENABLED', 0, 1, 0);
 
 -- ----------------------------
 -- Table structure for iam_role
@@ -2220,6 +2244,30 @@ INSERT INTO `iam_role_permission` VALUES (20, 1, 1, '2026-02-14 13:50:14.489', '
 INSERT INTO `iam_role_permission` VALUES (21, 1, 1, '2026-02-14 13:50:14.489', '2026-02-14 13:50:14.489', 0, 1, NULL, NULL, NULL, 1, 90302);
 INSERT INTO `iam_role_permission` VALUES (22, 1, 1, '2026-02-14 13:50:14.489', '2026-02-14 13:50:14.489', 0, 1, NULL, NULL, NULL, 1, 90303);
 INSERT INTO `iam_role_permission` VALUES (23, 1, 1, '2026-02-14 13:50:14.489', '2026-02-14 13:50:14.489', 0, 1, NULL, NULL, NULL, 1, 90304);
+INSERT INTO `iam_role_permission` VALUES (100, 1, 1, '2026-02-14 16:23:23.340', '2026-02-14 16:23:23.340', 0, 1, NULL, NULL, NULL, 1, 904);
+INSERT INTO `iam_role_permission` VALUES (101, 1, 1, '2026-02-14 16:23:23.340', '2026-02-14 16:23:23.340', 0, 1, NULL, NULL, NULL, 1, 90401);
+INSERT INTO `iam_role_permission` VALUES (102, 1, 1, '2026-02-14 16:23:23.340', '2026-02-14 16:23:23.340', 0, 1, NULL, NULL, NULL, 1, 90402);
+INSERT INTO `iam_role_permission` VALUES (103, 1, 1, '2026-02-14 16:23:23.340', '2026-02-14 16:23:23.340', 0, 1, NULL, NULL, NULL, 1, 905);
+INSERT INTO `iam_role_permission` VALUES (104, 1, 1, '2026-02-14 16:23:23.340', '2026-02-14 16:23:23.340', 0, 1, NULL, NULL, NULL, 1, 90501);
+INSERT INTO `iam_role_permission` VALUES (105, 1, 1, '2026-02-14 16:23:23.340', '2026-02-14 16:23:23.340', 0, 1, NULL, NULL, NULL, 1, 90502);
+INSERT INTO `iam_role_permission` VALUES (106, 1, 1, '2026-02-14 16:23:23.340', '2026-02-14 16:23:23.340', 0, 1, NULL, NULL, NULL, 1, 90503);
+INSERT INTO `iam_role_permission` VALUES (107, 1, 1, '2026-02-14 16:23:23.340', '2026-02-14 16:23:23.340', 0, 1, NULL, NULL, NULL, 1, 90504);
+INSERT INTO `iam_role_permission` VALUES (108, 1, 1, '2026-02-14 16:23:23.340', '2026-02-14 16:23:23.340', 0, 1, NULL, NULL, NULL, 1, 906);
+INSERT INTO `iam_role_permission` VALUES (109, 1, 1, '2026-02-14 16:23:23.340', '2026-02-14 16:23:23.340', 0, 1, NULL, NULL, NULL, 1, 90601);
+INSERT INTO `iam_role_permission` VALUES (110, 1, 1, '2026-02-14 16:23:23.340', '2026-02-14 16:23:23.340', 0, 1, NULL, NULL, NULL, 1, 90602);
+INSERT INTO `iam_role_permission` VALUES (111, 1, 1, '2026-02-14 16:23:23.340', '2026-02-14 16:23:23.340', 0, 1, NULL, NULL, NULL, 1, 90603);
+INSERT INTO `iam_role_permission` VALUES (112, 1, 1, '2026-02-14 16:23:23.340', '2026-02-14 16:23:23.340', 0, 1, NULL, NULL, NULL, 1, 90604);
+INSERT INTO `iam_role_permission` VALUES (113, 1, 1, '2026-02-19 17:25:40.417', '2026-02-19 17:25:40.417', 0, 0, NULL, NULL, NULL, 1, 91000);
+INSERT INTO `iam_role_permission` VALUES (114, 1, 1, '2026-02-19 17:25:40.417', '2026-02-19 17:25:40.417', 0, 0, NULL, NULL, NULL, 1, 91001);
+INSERT INTO `iam_role_permission` VALUES (115, 1, 1, '2026-02-19 17:25:40.417', '2026-02-19 17:25:40.417', 0, 0, NULL, NULL, NULL, 1, 91002);
+INSERT INTO `iam_role_permission` VALUES (116, 1, 1, '2026-02-19 17:25:40.417', '2026-02-19 17:25:40.417', 0, 0, NULL, NULL, NULL, 1, 91003);
+INSERT INTO `iam_role_permission` VALUES (117, 1, 1, '2026-02-19 17:25:40.417', '2026-02-19 17:25:40.417', 0, 0, NULL, NULL, NULL, 1, 91010);
+INSERT INTO `iam_role_permission` VALUES (118, 1, 1, '2026-02-19 17:25:40.417', '2026-02-19 17:25:40.417', 0, 0, NULL, NULL, NULL, 1, 91011);
+INSERT INTO `iam_role_permission` VALUES (119, 1, 1, '2026-02-19 17:25:40.417', '2026-02-19 17:25:40.417', 0, 0, NULL, NULL, NULL, 1, 91012);
+INSERT INTO `iam_role_permission` VALUES (120, 1, 1, '2026-02-19 17:25:40.417', '2026-02-19 17:25:40.417', 0, 0, NULL, NULL, NULL, 1, 91020);
+INSERT INTO `iam_role_permission` VALUES (121, 1, 1, '2026-02-19 17:25:40.417', '2026-02-19 17:25:40.417', 0, 0, NULL, NULL, NULL, 1, 91021);
+INSERT INTO `iam_role_permission` VALUES (122, 1, 1, '2026-02-19 17:25:40.417', '2026-02-19 17:25:40.417', 0, 0, NULL, NULL, NULL, 1, 91022);
+INSERT INTO `iam_role_permission` VALUES (123, 1, 1, '2026-02-19 17:25:40.417', '2026-02-19 17:25:40.417', 0, 0, NULL, NULL, NULL, 1, 91023);
 
 -- ----------------------------
 -- Table structure for iam_tenant
@@ -2286,8 +2334,8 @@ CREATE TABLE `iam_user`  (
 -- ----------------------------
 -- Records of iam_user
 -- ----------------------------
-INSERT INTO `iam_user` VALUES (1, 1, 1, '2026-02-14 09:42:01.000', '2026-02-14 09:42:01.000', 0, 1, NULL, NULL, NULL, 'admin', '$2a$10$GzCERpucEK3zfFAHJKOBFeliWWhbaeXI9n3.HtKTk8XkHJxcGVRSG', 'Administrator', NULL, NULL, 'ENABLED', NULL);
-INSERT INTO `iam_user` VALUES (2, 1, 1, '2026-02-14 09:42:01.000', '2026-02-14 09:42:01.000', 0, 1, NULL, NULL, NULL, 'operator', '$2a$10$GzCERpucEK3zfFAHJKOBFeliWWhbaeXI9n3.HtKTk8XkHJxcGVRSG', 'Operator User', NULL, NULL, 'ENABLED', NULL);
+INSERT INTO `iam_user` VALUES (1, 1, 1, '2026-02-14 09:42:01.000', '2026-02-14 09:42:01.000', 0, 1, NULL, NULL, NULL, 'admin', '$2a$10$fuau/TSwdL/YWFkkc78x7eEKislv5UA6ziG70taSzkPzq4F.XaOy2', 'Administrator', NULL, NULL, 'ENABLED', NULL);
+INSERT INTO `iam_user` VALUES (2, 1, 1, '2026-02-14 09:42:01.000', '2026-02-14 09:42:01.000', 0, 2, NULL, 1, NULL, 'operator', '$2a$10$NS2bAzxYc2927abthyEPWeuxzeVZVVlQ0xRibkTlD4vbVeWkGqfzu', 'Operator User', NULL, NULL, 'ENABLED', NULL);
 
 -- ----------------------------
 -- Table structure for iam_user_role
@@ -2488,7 +2536,8 @@ CREATE TABLE `inv_balance`  (
   INDEX `idx_tenant_factory_created`(`tenant_id` ASC, `factory_id` ASC, `created_at` ASC) USING BTREE,
   INDEX `idx_tenant_factory_updated`(`tenant_id` ASC, `factory_id` ASC, `updated_at` ASC) USING BTREE,
   INDEX `idx_tenant_factory_deleted`(`tenant_id` ASC, `factory_id` ASC, `deleted` ASC) USING BTREE,
-  INDEX `idx_balance_sku`(`tenant_id` ASC, `warehouse_id` ASC, `sku_id` ASC) USING BTREE
+  INDEX `idx_balance_sku`(`tenant_id` ASC, `warehouse_id` ASC, `sku_id` ASC) USING BTREE,
+  INDEX `idx_balance_tenant_factory_deleted`(`tenant_id` ASC, `factory_id` ASC, `deleted` ASC) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '库存余额(读模型)' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
@@ -2594,13 +2643,15 @@ CREATE TABLE `inv_ledger`  (
   `after_allocated` int NOT NULL COMMENT '变更后预占',
   `remark` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '备注',
   `extra_json` json NULL COMMENT '扩展',
+  `idempotency_key` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '幂等键 bizType|bizNo|action|lineNo',
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `uk_ledger_txn_no`(`tenant_id` ASC, `txn_no` ASC) USING BTREE,
   INDEX `idx_tenant_factory_created`(`tenant_id` ASC, `factory_id` ASC, `created_at` ASC) USING BTREE,
   INDEX `idx_tenant_factory_updated`(`tenant_id` ASC, `factory_id` ASC, `updated_at` ASC) USING BTREE,
   INDEX `idx_tenant_factory_deleted`(`tenant_id` ASC, `factory_id` ASC, `deleted` ASC) USING BTREE,
   INDEX `idx_ledger_biz`(`tenant_id` ASC, `biz_type` ASC, `biz_no` ASC) USING BTREE,
-  INDEX `idx_ledger_sku_time`(`tenant_id` ASC, `warehouse_id` ASC, `sku_id` ASC, `created_at` ASC) USING BTREE
+  INDEX `idx_ledger_sku_time`(`tenant_id` ASC, `warehouse_id` ASC, `sku_id` ASC, `created_at` ASC) USING BTREE,
+  UNIQUE INDEX `uk_ledger_idempotency`(`tenant_id` ASC, `factory_id` ASC, `idempotency_key` ASC) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '库存台账(可审计真相)' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
@@ -2625,8 +2676,10 @@ CREATE TABLE `inv_reservation`  (
   `biz_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '业务类型(FULFILLMENT/OUTBOUND/WORK_ORDER...)',
   `biz_no` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '业务单号',
   `warehouse_id` bigint NOT NULL COMMENT '仓库ID',
+  `location_id` bigint NULL DEFAULT NULL COMMENT '库位ID(与余额一致)',
   `sku_id` bigint NOT NULL COMMENT 'SKU/物料ID',
   `qty` int NOT NULL COMMENT '预占数量',
+  `consumed_qty` int NOT NULL DEFAULT 0 COMMENT '已核销数量',
   `status` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'RESERVED/RELEASED/CONSUMED',
   `expire_at` datetime(3) NULL DEFAULT NULL COMMENT '预占过期时间(可选)',
   `remark` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '备注',
@@ -2636,7 +2689,8 @@ CREATE TABLE `inv_reservation`  (
   INDEX `idx_tenant_factory_updated`(`tenant_id` ASC, `factory_id` ASC, `updated_at` ASC) USING BTREE,
   INDEX `idx_tenant_factory_deleted`(`tenant_id` ASC, `factory_id` ASC, `deleted` ASC) USING BTREE,
   INDEX `idx_reserve_status`(`tenant_id` ASC, `status` ASC, `created_at` ASC) USING BTREE,
-  INDEX `idx_reserve_biz`(`tenant_id` ASC, `biz_type` ASC, `biz_no` ASC) USING BTREE
+  INDEX `idx_reserve_biz`(`tenant_id` ASC, `biz_type` ASC, `biz_no` ASC) USING BTREE,
+  INDEX `idx_reserve_tenant_factory_status`(`tenant_id` ASC, `factory_id` ASC, `deleted` ASC, `status` ASC, `created_at` ASC) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '库存预占' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
@@ -4292,6 +4346,39 @@ CREATE TABLE `prd_sku_barcode`  (
 -- ----------------------------
 
 -- ----------------------------
+-- Table structure for prd_sku_mapping
+-- ----------------------------
+DROP TABLE IF EXISTS `prd_sku_mapping`;
+CREATE TABLE `prd_sku_mapping`  (
+  `id` bigint NOT NULL COMMENT '主键ID',
+  `tenant_id` bigint NOT NULL COMMENT '租户ID',
+  `factory_id` bigint NOT NULL COMMENT '工厂ID',
+  `created_at` datetime(3) NOT NULL,
+  `updated_at` datetime(3) NOT NULL,
+  `deleted` tinyint NOT NULL DEFAULT 0,
+  `version` int NOT NULL DEFAULT 0,
+  `created_by` bigint NULL DEFAULT NULL,
+  `updated_by` bigint NULL DEFAULT NULL,
+  `trace_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `sku_id` bigint NULL DEFAULT NULL COMMENT '内部SKU ID',
+  `sku_code` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '内部SKU编码',
+  `channel` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'AMAZON/TEMU/SHEIN等',
+  `shop_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '' COMMENT '店铺ID',
+  `external_sku` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '平台SKU',
+  `external_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `remark` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `uk_mapping`(`tenant_id` ASC, `factory_id` ASC, `channel` ASC, `shop_id` ASC, `external_sku` ASC) USING BTREE,
+  INDEX `idx_tenant_factory_deleted`(`tenant_id` ASC, `factory_id` ASC, `deleted` ASC) USING BTREE,
+  INDEX `idx_mapping_sku`(`tenant_id` ASC, `sku_id` ASC) USING BTREE,
+  INDEX `idx_mapping_channel_shop`(`tenant_id` ASC, `channel` ASC, `shop_id` ASC) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '平台SKU映射' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of prd_sku_mapping
+-- ----------------------------
+
+-- ----------------------------
 -- Table structure for prd_spu
 -- ----------------------------
 DROP TABLE IF EXISTS `prd_spu`;
@@ -4943,6 +5030,24 @@ CREATE TABLE `sys_login_log`  (
 INSERT INTO `sys_login_log` VALUES (2022486498957631490, 1, 1, 'operator', NULL, 'SUCCESS', 'Login successful', '2026-02-14 09:42:12.000', '2026-02-14 09:42:12.000', 0, 0, NULL, NULL, '67b3947f5c60492c8e226aedf824141a');
 INSERT INTO `sys_login_log` VALUES (2022486501805563906, 1, 1, 'admin', NULL, 'SUCCESS', 'Login successful', '2026-02-14 09:42:13.000', '2026-02-14 09:42:13.000', 0, 0, NULL, NULL, '5a93da49f48e47e9b2af9684365e6471');
 INSERT INTO `sys_login_log` VALUES (2022549347671269378, 1, 1, 'admin', NULL, 'SUCCESS', 'Login successful', '2026-02-14 13:51:56.286', '2026-02-14 13:51:56.295', 0, 0, NULL, NULL, '93be15bc-f73f-49f0-b391-0a99dc023806');
+INSERT INTO `sys_login_log` VALUES (2022585558347554817, 1, 1, 'admin', NULL, 'SUCCESS', 'Login successful', '2026-02-14 16:15:49.585', '2026-02-14 16:15:49.591', 0, 0, NULL, NULL, 'b693577a-30d7-4aa1-acdc-a213a2473585');
+INSERT INTO `sys_login_log` VALUES (2022587528378589185, 1, 1, 'admin', NULL, 'SUCCESS', 'Login successful', '2026-02-14 16:23:39.289', '2026-02-14 16:23:39.289', 0, 0, NULL, NULL, '7bb39542-870d-45d8-afbe-ea305fd1db0e');
+INSERT INTO `sys_login_log` VALUES (2022593232090996738, 1, 1, 'admin', NULL, 'SUCCESS', 'Login successful', '2026-02-14 16:46:19.148', '2026-02-14 16:46:19.154', 0, 0, NULL, NULL, 'baf5b3a3-faf1-4abc-addd-576557be3f6f');
+INSERT INTO `sys_login_log` VALUES (2022593356829597698, 1, 1, 'admin', NULL, 'SUCCESS', 'Login successful', '2026-02-14 16:46:48.899', '2026-02-14 16:46:48.900', 0, 0, NULL, NULL, '48958ae5-45f2-49b0-a942-73bf3b96d7b0');
+INSERT INTO `sys_login_log` VALUES (2022599831148867586, 1, 1, 'admin', NULL, 'SUCCESS', 'Login successful', '2026-02-14 17:12:32.486', '2026-02-14 17:12:32.493', 0, 0, NULL, NULL, 'beed1605-bf08-4f88-82d7-6e2f2760b39f');
+INSERT INTO `sys_login_log` VALUES (2022601063640903682, 1, 1, 'admin', NULL, 'SUCCESS', 'Login successful', '2026-02-14 17:17:26.353', '2026-02-14 17:17:26.354', 0, 0, NULL, NULL, '1194643f-15b1-4162-a1cb-9efb179c3976');
+INSERT INTO `sys_login_log` VALUES (2022603646505897986, 1, 1, 'admin', NULL, 'SUCCESS', 'Login successful', '2026-02-14 17:27:42.142', '2026-02-14 17:27:42.144', 0, 0, NULL, NULL, '18ff3409-5623-4d62-b605-8be84ab7c115');
+INSERT INTO `sys_login_log` VALUES (2022603681817743361, 1, 1, 'admin', NULL, 'SUCCESS', 'Login successful', '2026-02-14 17:27:50.577', '2026-02-14 17:27:50.577', 0, 0, NULL, NULL, '1ef8b422-e4ab-4059-825c-4b4a6a3c4e90');
+INSERT INTO `sys_login_log` VALUES (2024383797476507650, 1, 1, 'admin', NULL, 'SUCCESS', 'Login successful', '2026-02-19 15:21:23.203', '2026-02-19 15:21:23.211', 0, 0, NULL, NULL, '976380bb-bcbe-4578-b5e3-071b5039d3e9');
+INSERT INTO `sys_login_log` VALUES (2024383877633851394, 1, 1, 'admin', NULL, 'SUCCESS', 'Login successful', '2026-02-19 15:21:42.329', '2026-02-19 15:21:42.330', 0, 0, NULL, NULL, 'a0541fb3-550a-44fb-964e-2275e7bb691a');
+INSERT INTO `sys_login_log` VALUES (2024384142843887618, 1, 1, 'admin', NULL, 'SUCCESS', 'Login successful', '2026-02-19 15:22:45.557', '2026-02-19 15:22:45.559', 0, 0, NULL, NULL, '2233f19e-2370-4745-95bc-784e105cf931');
+INSERT INTO `sys_login_log` VALUES (2024385924655529985, 1, 1, 'operator', NULL, 'SUCCESS', 'Login successful', '2026-02-19 15:29:50.371', '2026-02-19 15:29:50.372', 0, 0, NULL, NULL, '013ac175-6382-4bab-b2f6-41510567bdfb');
+INSERT INTO `sys_login_log` VALUES (2024386003206455298, 1, 1, 'admin', NULL, 'SUCCESS', 'Login successful', '2026-02-19 15:30:09.103', '2026-02-19 15:30:09.104', 0, 0, NULL, NULL, 'a07656d8-36af-4bbb-8ec0-2169e2147fc8');
+INSERT INTO `sys_login_log` VALUES (2024411072301424641, 1, 1, 'admin', NULL, 'SUCCESS', 'Login successful', '2026-02-19 17:09:46.026', '2026-02-19 17:09:46.034', 0, 0, NULL, NULL, '26cd53bc-3641-4711-a1c7-d2b9780c175c');
+INSERT INTO `sys_login_log` VALUES (2024412071288168450, 1, 1, 'admin', NULL, 'SUCCESS', 'Login successful', '2026-02-19 17:13:44.213', '2026-02-19 17:13:44.214', 0, 0, NULL, NULL, '18b3dd98-9120-43b2-b7ec-adab65e3e03e');
+INSERT INTO `sys_login_log` VALUES (2024415798430556161, 1, 1, 'admin', NULL, 'SUCCESS', 'Login successful', '2026-02-19 17:28:32.825', '2026-02-19 17:28:32.832', 0, 0, NULL, NULL, 'fe98e165-6510-4e16-b3f0-94b24291ba6d');
+INSERT INTO `sys_login_log` VALUES (2024418822699941890, 1, 1, 'admin', NULL, 'SUCCESS', 'Login successful', '2026-02-19 17:40:33.866', '2026-02-19 17:40:33.875', 0, 0, NULL, NULL, 'c67d4f9a-4b2c-47df-a60c-df46ccc91fdc');
+INSERT INTO `sys_login_log` VALUES (2024422754088185857, 1, 1, 'admin', NULL, 'SUCCESS', 'Login successful', '2026-02-19 17:56:11.184', '2026-02-19 17:56:11.189', 0, 0, NULL, NULL, '029f993c-f53a-4012-90df-4dbbfbac1650');
 
 -- ----------------------------
 -- Table structure for sys_outbox_event

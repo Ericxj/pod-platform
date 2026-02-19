@@ -21,6 +21,7 @@
         <module>pod-wms</module>
         <module>pod-tms</module>
         <module>pod-ai</module>
+        <module>pod-prd</module>
         <module>pod-start</module>
     </modules>
 
@@ -154,6 +155,11 @@
             <dependency>
                 <groupId>com.pod</groupId>
                 <artifactId>pod-ai</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.pod</groupId>
+                <artifactId>pod-prd</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>
