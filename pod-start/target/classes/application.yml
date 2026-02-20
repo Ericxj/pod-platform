@@ -52,6 +52,9 @@ tms:
     #   awsSecretAccessKey: "..."
     #   connectTimeoutMs: 10000
     #   readTimeoutMs: 30000
+    #   orderItemsCacheTtlMinutes: 60
+    #   orderItemsMaxConcurrentPerMarketplace: 3
+    #   orderItemsStaleToleranceHours: 6
 
 xxl:
   job:

@@ -14,6 +14,8 @@ public class OrderHold extends BaseEntity {
 
     public static final String HOLD_TYPE_SKU_MAPPING = "SKU_MAPPING";
     public static final String HOLD_TYPE_CHANNEL_ACK = "CHANNEL_ACK";
+    /** P1.6++ 拉单阶段 getOrderItems 鉴权失败/匹配失败 */
+    public static final String HOLD_TYPE_CHANNEL_DATA = "CHANNEL_DATA";
     public static final String STATUS_OPEN = "OPEN";
     public static final String STATUS_RESOLVED = "RESOLVED";
 

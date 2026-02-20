@@ -104,6 +104,7 @@ public class UnifiedOrderApplicationService {
             order.setOrderStatus("NEW");
             order.setPaymentStatus(null);
             order.setRiskFlag(0);
+            order.setMarketplaceId(dtoFinal.getMarketplaceId());
             order.setTenantId(tenantId());
             order.setFactoryId(factoryId());
             orderMapper.insert(order);

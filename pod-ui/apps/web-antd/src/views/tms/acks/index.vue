@@ -101,6 +101,16 @@ function statusTag(s: string) {
   return { color: map[s] || 'default', text: s || '-' };
 }
 
+function formatOrderItemsJson(json: string | undefined) {
+  if (!json || !json.trim()) return '-';
+  try {
+    const arr = JSON.parse(json) as Array<{ orderItemId?: string; quantity?: number }>;
+    return arr.map((x) => `${x.orderItemId ?? '-'}: qty ${x.quantity ?? 0}`).join('\n');
+  } catch {
+    return json;
+  }
+}
+
 onMounted(load);
 </script>
 
@@ -125,6 +135,7 @@ onMounted(load);
     >
       <Table.Column title="ID" data-index="id" width="80" />
       <Table.Column title="订单号" data-index="amazonOrderId" width="160" />
+      <Table.Column title="包裹号" data-index="packageReferenceId" width="80" />
       <Table.Column title="运单号" data-index="trackingNo" width="140" />
       <Table.Column title="承运商" data-index="carrierCode" width="90" />
       <Table.Column title="发货时间(UTC)" data-index="shipDateUtc" width="170" />
@@ -135,6 +146,12 @@ onMounted(load);
       </Table.Column>
       <Table.Column title="重试次数" data-index="retryCount" width="90" />
       <Table.Column title="下次重试" data-index="nextRetryAt" width="170" />
+      <Table.Column title="自愈" key="selfHeal" width="100">
+        <template #default="{ record }">
+          <span v-if="record.selfHealAttempted">{{ record.selfHealAction || 'Y' }}</span>
+          <span v-else>-</span>
+        </template>
+      </Table.Column>
       <Table.Column title="最后错误" data-index="errorMessage" ellipsis />
       <Table.Column title="操作" key="action" width="120" fixed="right">
         <template #default="{ record }">
@@ -149,17 +166,26 @@ onMounted(load);
       <template v-else-if="detailRecord">
         <Descriptions :column="2" bordered size="small" class="mb-4">
           <Descriptions.Item label="订单号">{{ detailRecord.amazonOrderId }}</Descriptions.Item>
+          <Descriptions.Item label="包裹号">{{ detailRecord.packageReferenceId ?? '-' }}</Descriptions.Item>
           <Descriptions.Item label="状态"><Tag :color="statusTag(detailRecord.status).color">{{ detailRecord.status }}</Tag></Descriptions.Item>
           <Descriptions.Item label="运单号">{{ detailRecord.trackingNo }}</Descriptions.Item>
           <Descriptions.Item label="承运商">{{ detailRecord.carrierCode }} / {{ detailRecord.carrierName }}</Descriptions.Item>
           <Descriptions.Item label="发货时间(UTC)">{{ detailRecord.shipDateUtc }}</Descriptions.Item>
           <Descriptions.Item label="重试次数">{{ detailRecord.retryCount }}</Descriptions.Item>
+          <Descriptions.Item label="404重试">{{ detailRecord.retry404Count ?? 0 }}</Descriptions.Item>
           <Descriptions.Item label="下次重试">{{ detailRecord.nextRetryAt }}</Descriptions.Item>
           <Descriptions.Item label="最后尝试">{{ detailRecord.lastAttemptAt }}</Descriptions.Item>
+          <Descriptions.Item label="自愈尝试">{{ detailRecord.selfHealAttempted ? '是' : '否' }}</Descriptions.Item>
+          <Descriptions.Item label="自愈动作">{{ detailRecord.selfHealAction ?? '-' }}</Descriptions.Item>
+          <Descriptions.Item label="自愈时间">{{ detailRecord.selfHealAt ?? '-' }}</Descriptions.Item>
           <Descriptions.Item label="响应码">{{ detailRecord.responseCode }}</Descriptions.Item>
           <Descriptions.Item label="错误码">{{ detailRecord.errorCode }}</Descriptions.Item>
           <Descriptions.Item label="错误信息" :span="2">{{ detailRecord.errorMessage }}</Descriptions.Item>
         </Descriptions>
+        <div v-if="detailRecord.orderItemsJson" class="mb-4">
+          <div class="text-sm font-medium mb-1">包裹内 item 分摊</div>
+          <pre class="text-xs overflow-auto max-h-32 bg-gray-50 p-2 rounded">{{ formatOrderItemsJson(detailRecord.orderItemsJson) }}</pre>
+        </div>
         <Collapse v-if="detailRecord.requestPayloadJson" class="mb-2">
           <Collapse.Panel key="payload" header="请求 payload">
             <pre class="text-xs overflow-auto max-h-40">{{ detailRecord.requestPayloadJson }}</pre>

@@ -21,6 +21,10 @@
             <artifactId>pod-prd</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.pod</groupId>
+            <artifactId>pod-iam</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.xuxueli</groupId>
             <artifactId>xxl-job-core</artifactId>
             <version>2.4.0</version>

@@ -70,6 +70,20 @@ public class ChannelShipmentAck extends BaseEntity {
     private Long fulfillmentId;
     @TableField("unified_order_id")
     private Long unifiedOrderId;
+    @TableField("wms_pack_id")
+    private Long wmsPackId;
+    @TableField("order_items_json")
+    private String orderItemsJson;
+    @TableField("self_heal_attempted")
+    private Boolean selfHealAttempted;
+    @TableField("self_heal_action")
+    private String selfHealAction;
+    @TableField("self_heal_at")
+    private LocalDateTime selfHealAt;
+    @TableField("retry_404_count")
+    private Integer retry404Count;
+
+    public static final int MAX_RETRY_404 = 3;
 
     public void markSending() {
         if (!STATUS_CREATED.equals(this.status) && !STATUS_FAILED_RETRYABLE.equals(this.status)) {
@@ -112,6 +126,13 @@ public class ChannelShipmentAck extends BaseEntity {
         this.errorMessage = errorMessage != null && errorMessage.length() > 1024 ? errorMessage.substring(0, 1024) : errorMessage;
         this.nextRetryAt = null;
         this.retryCount = (this.retryCount == null ? 0 : this.retryCount) + 1;
+    }
+
+    /** P1.6++ D: 记录自愈尝试（仅一次） */
+    public void markSelfHeal(String action, LocalDateTime at) {
+        this.selfHealAttempted = Boolean.TRUE;
+        this.selfHealAction = action != null && action.length() > 128 ? action.substring(0, 128) : action;
+        this.selfHealAt = at;
     }
 
     public boolean canRetry() {
@@ -186,4 +207,16 @@ public class ChannelShipmentAck extends BaseEntity {
     public void setFulfillmentId(Long fulfillmentId) { this.fulfillmentId = fulfillmentId; }
     public Long getUnifiedOrderId() { return unifiedOrderId; }
     public void setUnifiedOrderId(Long unifiedOrderId) { this.unifiedOrderId = unifiedOrderId; }
+    public Long getWmsPackId() { return wmsPackId; }
+    public void setWmsPackId(Long wmsPackId) { this.wmsPackId = wmsPackId; }
+    public String getOrderItemsJson() { return orderItemsJson; }
+    public void setOrderItemsJson(String orderItemsJson) { this.orderItemsJson = orderItemsJson; }
+    public Boolean getSelfHealAttempted() { return selfHealAttempted; }
+    public void setSelfHealAttempted(Boolean selfHealAttempted) { this.selfHealAttempted = selfHealAttempted; }
+    public String getSelfHealAction() { return selfHealAction; }
+    public void setSelfHealAction(String selfHealAction) { this.selfHealAction = selfHealAction; }
+    public LocalDateTime getSelfHealAt() { return selfHealAt; }
+    public void setSelfHealAt(LocalDateTime selfHealAt) { this.selfHealAt = selfHealAt; }
+    public Integer getRetry404Count() { return retry404Count; }
+    public void setRetry404Count(Integer retry404Count) { this.retry404Count = retry404Count; }
 }

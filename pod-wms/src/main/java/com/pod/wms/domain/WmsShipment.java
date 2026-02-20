@@ -19,6 +19,8 @@ public class WmsShipment extends BaseEntity {
     private String trackingNo;
     @TableField("shipped_at")
     private LocalDateTime shippedAt;
+    @TableField("pack_id")
+    private Long packId;
 
     public Long getOutboundId() { return outboundId; }
     public void setOutboundId(Long outboundId) { this.outboundId = outboundId; }
@@ -30,4 +32,6 @@ public class WmsShipment extends BaseEntity {
     public void setTrackingNo(String trackingNo) { this.trackingNo = trackingNo; }
     public LocalDateTime getShippedAt() { return shippedAt; }
     public void setShippedAt(LocalDateTime shippedAt) { this.shippedAt = shippedAt; }
+    public Long getPackId() { return packId; }
+    public void setPackId(Long packId) { this.packId = packId; }
 }

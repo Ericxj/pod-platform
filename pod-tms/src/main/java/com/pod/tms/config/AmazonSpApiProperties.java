@@ -27,6 +27,12 @@ public class AmazonSpApiProperties {
     private String awsSecretAccessKey;
     private int connectTimeoutMs = 10_000;
     private int readTimeoutMs = 30_000;
+    /** getOrderItems 缓存 TTL 分钟；默认 60 */
+    private int orderItemsCacheTtlMinutes = 60;
+    /** getOrderItems 每 marketplace 最大并发；默认 3 */
+    private int orderItemsMaxConcurrentPerMarketplace = 3;
+    /** 过期后仍可返回旧缓存的最大小时数（stale-while-revalidate）；默认 6 */
+    private int orderItemsStaleToleranceHours = 6;
 
     public String getSellingRegion() {
         return sellingRegion;
@@ -77,4 +83,10 @@ public class AmazonSpApiProperties {
     public void setConnectTimeoutMs(int connectTimeoutMs) { this.connectTimeoutMs = connectTimeoutMs; }
     public int getReadTimeoutMs() { return readTimeoutMs; }
     public void setReadTimeoutMs(int readTimeoutMs) { this.readTimeoutMs = readTimeoutMs; }
+    public int getOrderItemsCacheTtlMinutes() { return orderItemsCacheTtlMinutes; }
+    public void setOrderItemsCacheTtlMinutes(int orderItemsCacheTtlMinutes) { this.orderItemsCacheTtlMinutes = orderItemsCacheTtlMinutes; }
+    public int getOrderItemsMaxConcurrentPerMarketplace() { return orderItemsMaxConcurrentPerMarketplace; }
+    public void setOrderItemsMaxConcurrentPerMarketplace(int orderItemsMaxConcurrentPerMarketplace) { this.orderItemsMaxConcurrentPerMarketplace = orderItemsMaxConcurrentPerMarketplace; }
+    public int getOrderItemsStaleToleranceHours() { return orderItemsStaleToleranceHours; }
+    public void setOrderItemsStaleToleranceHours(int orderItemsStaleToleranceHours) { this.orderItemsStaleToleranceHours = orderItemsStaleToleranceHours; }
 }

@@ -13,12 +13,19 @@ public class GetOrderItemsResult {
     private String errorCode;
     private String errorMessage;
     private List<AmazonOrderItemDTO> orderItems;
+    /** 是否来自缓存（P1.6++） */
+    private boolean cacheHit;
 
     public static GetOrderItemsResult ok(List<AmazonOrderItemDTO> orderItems) {
+        return ok(orderItems, false);
+    }
+
+    public static GetOrderItemsResult ok(List<AmazonOrderItemDTO> orderItems, boolean cacheHit) {
         GetOrderItemsResult r = new GetOrderItemsResult();
         r.setSuccess(true);
         r.setHttpStatusCode(200);
         r.setOrderItems(orderItems != null ? orderItems : Collections.emptyList());
+        r.setCacheHit(cacheHit);
         return r;
     }
 
@@ -50,4 +57,6 @@ public class GetOrderItemsResult {
     public void setErrorMessage(String errorMessage) { this.errorMessage = errorMessage; }
     public List<AmazonOrderItemDTO> getOrderItems() { return orderItems; }
     public void setOrderItems(List<AmazonOrderItemDTO> orderItems) { this.orderItems = orderItems; }
+    public boolean isCacheHit() { return cacheHit; }
+    public void setCacheHit(boolean cacheHit) { this.cacheHit = cacheHit; }
 }

@@ -82,6 +82,15 @@ export interface ChannelAckRecord {
   requestPayloadJson?: string;
   responseBody?: string;
   createdAt?: string;
+  /** P1.6++ C 多包裹：WMS pack id */
+  wmsPackId?: number;
+  /** P1.6++ C 本包裹 orderItemId+quantity 快照 JSON */
+  orderItemsJson?: string;
+  /** P1.6++ D 自愈 */
+  selfHealAttempted?: boolean;
+  selfHealAction?: string;
+  selfHealAt?: string;
+  retry404Count?: number;
 }
 
 export function pageAcks(params: { current?: number; size?: number; channel?: string; status?: string; orderId?: string; trackingNo?: string }) {

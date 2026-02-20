@@ -18,6 +18,7 @@ public class ChannelOrderDto {
     private BigDecimal taxAmount;
     private BigDecimal discountAmount;
     private String serviceLevel;
+    private String marketplaceId;
     private List<ChannelOrderItemDto> items;
 
     public String getExternalOrderId() { return externalOrderId; }
@@ -44,6 +45,8 @@ public class ChannelOrderDto {
     public void setDiscountAmount(BigDecimal discountAmount) { this.discountAmount = discountAmount; }
     public String getServiceLevel() { return serviceLevel; }
     public void setServiceLevel(String serviceLevel) { this.serviceLevel = serviceLevel; }
+    public String getMarketplaceId() { return marketplaceId; }
+    public void setMarketplaceId(String marketplaceId) { this.marketplaceId = marketplaceId; }
     public List<ChannelOrderItemDto> getItems() { return items; }
     public void setItems(List<ChannelOrderItemDto> items) { this.items = items; }
 }

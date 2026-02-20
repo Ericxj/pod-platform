@@ -11,7 +11,6 @@ import com.pod.oms.mapper.FulfillmentItemMapper;
 import com.pod.oms.mapper.UnifiedOrderItemMapper;
 import com.pod.tms.gateway.AmazonOrderItemDTO;
 import com.pod.tms.gateway.AmazonOrderItemsApiException;
-import com.pod.tms.gateway.AmazonSpApiGateway;
 import com.pod.tms.gateway.GetOrderItemsResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +34,7 @@ public class AmazonOrderQueryService {
     private static final String MATCH_BY_ASIN = "amazon_asin";
 
     @Autowired
-    private AmazonSpApiGateway amazonSpApiGateway;
+    private OrderItemsCacheService orderItemsCacheService;
     @Autowired
     private FulfillmentItemMapper fulfillmentItemMapper;
     @Autowired
@@ -51,23 +50,43 @@ public class AmazonOrderQueryService {
      * @param amazonOrderId 平台订单 ID
      * @param unifiedOrderId 统一订单 ID
      * @param fulfillmentId 履约单 ID（用于取履约行对应的 order items）
+     * @param marketplaceId 可选，用于缓存与限流
      * @param ackId 用于日志
      */
     @Transactional(rollbackFor = Exception.class)
-    public void getOrderItemsAndBackfill(String amazonOrderId, Long unifiedOrderId, Long fulfillmentId, Long ackId) {
+    public void getOrderItemsAndBackfill(String amazonOrderId, Long unifiedOrderId, Long fulfillmentId, String marketplaceId, Long ackId) {
         List<UnifiedOrderItem> toFill = listItemsMissingExternalId(unifiedOrderId, fulfillmentId);
         if (toFill.isEmpty()) return;
 
         long startMs = System.currentTimeMillis();
-        GetOrderItemsResult result = amazonSpApiGateway.getOrderItems(amazonOrderId);
+        GetOrderItemsResult result = orderItemsCacheService.getOrderItemsWithCache(amazonOrderId, marketplaceId);
         long durationMs = System.currentTimeMillis() - startMs;
-        log.info("getOrderItems amazonOrderId={} ackId={} tenantId={} factoryId={} traceId={} durationMs={} success={}",
-            amazonOrderId, ackId, tenantId(), factoryId(), TraceIdUtils.getTraceId(), durationMs, result.isSuccess());
+        log.info("getOrderItems amazonOrderId={} ackId={} tenantId={} factoryId={} traceId={} durationMs={} success={} cacheHit={}",
+            amazonOrderId, ackId, tenantId(), factoryId(), TraceIdUtils.getTraceId(), durationMs, result.isSuccess(), result.isCacheHit());
 
         if (!result.isSuccess()) {
             throw new AmazonOrderItemsApiException(result);
         }
+        doBackfill(amazonOrderId, unifiedOrderId, fulfillmentId, ackId, toFill, result);
+    }
 
+    /** P1.6++ D: 自愈 orderItemId invalid 时强制刷新缓存并回填（忽略 TTL）。 */
+    @Transactional(rollbackFor = Exception.class)
+    public void getOrderItemsAndBackfillForce(String amazonOrderId, Long unifiedOrderId, Long fulfillmentId, String marketplaceId, Long ackId) {
+        long startMs = System.currentTimeMillis();
+        GetOrderItemsResult result = orderItemsCacheService.getOrderItemsWithCache(amazonOrderId, marketplaceId != null ? marketplaceId : "", true);
+        long durationMs = System.currentTimeMillis() - startMs;
+        log.info("getOrderItemsAndBackfillForce amazonOrderId={} ackId={} durationMs={} success={}", amazonOrderId, ackId, durationMs, result.isSuccess());
+        if (!result.isSuccess()) {
+            throw new AmazonOrderItemsApiException(result);
+        }
+        List<UnifiedOrderItem> toFill = listItemsMissingExternalId(unifiedOrderId, fulfillmentId);
+        doBackfill(amazonOrderId, unifiedOrderId, fulfillmentId, ackId, toFill, result);
+    }
+
+    private void doBackfill(String amazonOrderId, Long unifiedOrderId, Long fulfillmentId, Long ackId,
+                           List<UnifiedOrderItem> toFill, GetOrderItemsResult result) {
+        if (toFill.isEmpty()) return;
         List<AmazonOrderItemDTO> apiItems = result.getOrderItems() != null ? result.getOrderItems() : new ArrayList<>();
         List<AmazonOrderItemDTO> remaining = new ArrayList<>(apiItems);
 

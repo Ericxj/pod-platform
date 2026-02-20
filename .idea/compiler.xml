@@ -19,6 +19,7 @@
         <module name="pod-iam" />
         <module name="pod-oms" />
         <module name="pod-ai" />
+        <module name="pod-srm" />
       </profile>
     </annotationProcessing>
   </component>
@@ -35,6 +36,7 @@
       <module name="pod-oms" options="-parameters" />
       <module name="pod-platform" options="-parameters" />
       <module name="pod-prd" options="-parameters" />
+      <module name="pod-srm" options="-parameters" />
       <module name="pod-start" options="-parameters" />
       <module name="pod-tms" options="-parameters" />
       <module name="pod-wms" options="-parameters" />
