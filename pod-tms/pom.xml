@@ -21,6 +21,11 @@
             <artifactId>pod-wms</artifactId>
             <version>1.0.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.pod</groupId>
+            <artifactId>pod-oms</artifactId>
+            <version>1.0.0</version>
+        </dependency>
     </dependencies>
 
 </project>

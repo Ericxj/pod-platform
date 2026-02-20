@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 public class OrderHold extends BaseEntity {
 
     public static final String HOLD_TYPE_SKU_MAPPING = "SKU_MAPPING";
+    public static final String HOLD_TYPE_CHANNEL_ACK = "CHANNEL_ACK";
     public static final String STATUS_OPEN = "OPEN";
     public static final String STATUS_RESOLVED = "RESOLVED";
 

@@ -35,6 +35,10 @@ public class UnifiedOrder extends BaseEntity {
     private Integer riskFlag;
     private Long sourceRawOrderId;
     private String extraJson;
+    @TableField("marketplace_id")
+    private String marketplaceId;
+    @TableField("order_purchase_date_utc")
+    private LocalDateTime orderPurchaseDateUtc;
 
     @TableField(exist = false)
     private List<UnifiedOrderItem> items = new ArrayList<>();
@@ -111,6 +115,10 @@ public class UnifiedOrder extends BaseEntity {
     public void setSourceRawOrderId(Long sourceRawOrderId) { this.sourceRawOrderId = sourceRawOrderId; }
     public String getExtraJson() { return extraJson; }
     public void setExtraJson(String extraJson) { this.extraJson = extraJson; }
+    public String getMarketplaceId() { return marketplaceId; }
+    public void setMarketplaceId(String marketplaceId) { this.marketplaceId = marketplaceId; }
+    public LocalDateTime getOrderPurchaseDateUtc() { return orderPurchaseDateUtc; }
+    public void setOrderPurchaseDateUtc(LocalDateTime orderPurchaseDateUtc) { this.orderPurchaseDateUtc = orderPurchaseDateUtc; }
     public List<UnifiedOrderItem> getItems() { return items; }
     public void setItems(List<UnifiedOrderItem> items) { this.items = items; }
 }

@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS `ai_task` (
 
 
 
--- tms_shipment
+-- tms_shipment (P1.6: source_type, source_no, carrier_code, service_code, fail_reason, uk_source)
 CREATE TABLE IF NOT EXISTS `tms_shipment` (
   `id` bigint NOT NULL,
   `tenant_id` bigint NOT NULL,
@@ -57,15 +57,20 @@ CREATE TABLE IF NOT EXISTS `tms_shipment` (
   `created_by` bigint,
   `updated_by` bigint,
   `trace_id` varchar(64),
+  `source_type` varchar(32),
+  `source_no` varchar(64),
   `shipment_no` varchar(64) NOT NULL,
   `fulfillment_id` bigint,
   `outbound_id` bigint,
-  `carrier_id` bigint NOT NULL,
+  `carrier_id` bigint,
   `method_id` bigint,
+  `carrier_code` varchar(64),
+  `service_code` varchar(64),
   `tracking_no` varchar(128),
   `label_url` varchar(512),
   `label_format` varchar(32),
   `status` varchar(32) NOT NULL,
+  `fail_reason` varchar(512),
   `shipped_at` datetime(3),
   `delivered_at` datetime(3),
   `cost_amount` decimal(18, 2),
@@ -76,7 +81,8 @@ CREATE TABLE IF NOT EXISTS `tms_shipment` (
   `ship_to_address_json` json,
   PRIMARY KEY (`id`),
   UNIQUE INDEX `uk_shipment_no`(`tenant_id`, `shipment_no`),
-  UNIQUE INDEX `uk_tracking`(`tenant_id`, `tracking_no`)
+  UNIQUE INDEX `uk_source`(`tenant_id`, `factory_id`, `source_type`(32), `source_no`(64)),
+  INDEX `idx_status`(`tenant_id`, `status`(32), `created_at`)
 );
 
 -- tms_shipment_package
@@ -100,6 +106,49 @@ CREATE TABLE IF NOT EXISTS `tms_shipment_package` (
   `content_json` json,
   PRIMARY KEY (`id`),
   UNIQUE INDEX `uk_ship_pkg`(`tenant_id`, `shipment_id`, `package_no`)
+);
+
+-- channel_shipment_ack (P1.6 Amazon confirmShipment 回传)
+CREATE TABLE IF NOT EXISTS `channel_shipment_ack` (
+  `id` bigint NOT NULL,
+  `tenant_id` bigint NOT NULL,
+  `factory_id` bigint NOT NULL,
+  `created_at` datetime(3) NOT NULL,
+  `updated_at` datetime(3) NOT NULL,
+  `deleted` tinyint NOT NULL DEFAULT 0,
+  `version` int NOT NULL DEFAULT 0,
+  `created_by` bigint,
+  `updated_by` bigint,
+  `trace_id` varchar(64),
+  `channel` varchar(32) NOT NULL,
+  `marketplace_id` varchar(32),
+  `shop_id` bigint,
+  `amazon_order_id` varchar(128) NOT NULL,
+  `external_order_id` varchar(128),
+  `package_reference_id` varchar(32) NOT NULL DEFAULT '1',
+  `carrier_code` varchar(64),
+  `carrier_name` varchar(128),
+  `shipping_method` varchar(64),
+  `tracking_no` varchar(128),
+  `ship_date_utc` datetime(3),
+  `request_payload_json` text,
+  `response_code` int,
+  `response_body` text,
+  `error_code` varchar(64),
+  `error_message` varchar(1024),
+  `status` varchar(32) NOT NULL DEFAULT 'CREATED',
+  `retry_count` int NOT NULL DEFAULT 0,
+  `next_retry_at` datetime(3),
+  `last_attempt_at` datetime(3),
+  `business_idempotency_key` varchar(256),
+  `wms_shipment_id` bigint,
+  `outbound_id` bigint,
+  `fulfillment_id` bigint,
+  `unified_order_id` bigint,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `uk_ack`(`tenant_id`, `factory_id`, `channel`(32), `amazon_order_id`(128), `package_reference_id`(32)),
+  INDEX `idx_status_next_retry`(`tenant_id`, `factory_id`, `status`(32), `next_retry_at`),
+  INDEX `idx_order_id`(`tenant_id`, `factory_id`, `amazon_order_id`(128))
 );
 
 -- tms_platform_ack

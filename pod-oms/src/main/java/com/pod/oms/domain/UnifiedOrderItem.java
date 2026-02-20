@@ -29,6 +29,8 @@ public class UnifiedOrderItem extends BaseEntity {
     private String itemStatus;
     private String personalizationJson;
     private String extraJson;
+    @TableField("external_order_item_id")
+    private String externalOrderItemId;
 
     // --- Getters & Setters ---
 
@@ -54,4 +56,6 @@ public class UnifiedOrderItem extends BaseEntity {
     public void setPersonalizationJson(String personalizationJson) { this.personalizationJson = personalizationJson; }
     public String getExtraJson() { return extraJson; }
     public void setExtraJson(String extraJson) { this.extraJson = extraJson; }
+    public String getExternalOrderItemId() { return externalOrderItemId; }
+    public void setExternalOrderItemId(String externalOrderItemId) { this.externalOrderItemId = externalOrderItemId; }
 }
