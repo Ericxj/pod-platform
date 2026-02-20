@@ -31,6 +31,12 @@ public class UnifiedOrderItem extends BaseEntity {
     private String extraJson;
     @TableField("external_order_item_id")
     private String externalOrderItemId;
+    @TableField("amazon_seller_sku")
+    private String amazonSellerSku;
+    @TableField("amazon_asin")
+    private String amazonAsin;
+    @TableField("amazon_quantity_ordered")
+    private Integer amazonQuantityOrdered;
 
     // --- Getters & Setters ---
 
@@ -58,4 +64,10 @@ public class UnifiedOrderItem extends BaseEntity {
     public void setExtraJson(String extraJson) { this.extraJson = extraJson; }
     public String getExternalOrderItemId() { return externalOrderItemId; }
     public void setExternalOrderItemId(String externalOrderItemId) { this.externalOrderItemId = externalOrderItemId; }
+    public String getAmazonSellerSku() { return amazonSellerSku; }
+    public void setAmazonSellerSku(String amazonSellerSku) { this.amazonSellerSku = amazonSellerSku; }
+    public String getAmazonAsin() { return amazonAsin; }
+    public void setAmazonAsin(String amazonAsin) { this.amazonAsin = amazonAsin; }
+    public Integer getAmazonQuantityOrdered() { return amazonQuantityOrdered; }
+    public void setAmazonQuantityOrdered(Integer amazonQuantityOrdered) { this.amazonQuantityOrdered = amazonQuantityOrdered; }
 }

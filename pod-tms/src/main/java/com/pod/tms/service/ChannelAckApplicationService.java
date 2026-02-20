@@ -21,9 +21,11 @@ import com.pod.oms.mapper.OrderHoldMapper;
 import com.pod.oms.mapper.UnifiedOrderItemMapper;
 import com.pod.oms.mapper.UnifiedOrderMapper;
 import com.pod.tms.domain.ChannelShipmentAck;
+import com.pod.tms.gateway.AmazonOrderItemsApiException;
 import com.pod.tms.gateway.AmazonSpApiGateway;
 import com.pod.tms.gateway.ConfirmShipmentRequest;
 import com.pod.tms.gateway.ConfirmShipmentResult;
+import com.pod.tms.gateway.GetOrderItemsResult;
 import com.pod.tms.mapper.ChannelShipmentAckMapper;
 import com.pod.wms.domain.OutboundOrder;
 import com.pod.wms.domain.WmsShipment;
@@ -37,7 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -71,6 +73,8 @@ public class ChannelAckApplicationService {
     private OrderHoldMapper orderHoldMapper;
     @Autowired
     private AmazonSpApiGateway amazonSpApiGateway;
+    @Autowired
+    private AmazonOrderQueryService amazonOrderQueryService;
     @Autowired
     private IdempotentService idempotentService;
 
@@ -121,25 +125,28 @@ public class ChannelAckApplicationService {
             if (existing != null) return existing.getId();
 
             LocalDateTime shippedAt = wmsShip.getShippedAt();
-            Instant shipDateUtc = shippedAt != null ? shippedAt.atZone(ZoneId.systemDefault()).toInstant() : Instant.now().minusSeconds(10);
+            Instant shipDateUtc = shippedAt != null ? shippedAt.atOffset(ZoneOffset.UTC).toInstant() : Instant.now().minusSeconds(10);
             Instant nowUtc = Instant.now();
             if (shipDateUtc.isAfter(nowUtc.minusSeconds(2))) shipDateUtc = nowUtc.minusSeconds(2);
             if (order.getOrderPurchaseDateUtc() != null) {
-                Instant orderPurchase = order.getOrderPurchaseDateUtc().atZone(ZoneId.systemDefault()).toInstant();
+                Instant orderPurchase = order.getOrderPurchaseDateUtc().atOffset(ZoneOffset.UTC).toInstant();
                 if (shipDateUtc.isBefore(orderPurchase)) shipDateUtc = orderPurchase;
             }
+            if (shipDateUtc.isAfter(nowUtc.minusSeconds(2))) shipDateUtc = nowUtc.minusSeconds(2);
 
             String marketplaceId = order.getMarketplaceId() != null ? order.getMarketplaceId() : "ATVPDKIKX0DER";
             String carrierCode = wmsShip.getCarrierCode() != null ? wmsShip.getCarrierCode() : "Other";
-            String carrierName = carrierCode;
-            if ("Other".equals(carrierCode)) carrierName = wmsShip.getCarrierCode() != null ? wmsShip.getCarrierCode() : "Other";
+            String carrierName = null;
+            if ("Other".equals(carrierCode)) {
+                carrierName = wmsShip.getCarrierCode() != null ? wmsShip.getCarrierCode() : "Other";
+            }
 
             List<ConfirmShipmentRequest.OrderItem> orderItems = new ArrayList<>();
             for (FulfillmentItem fi : ffItems) {
                 UnifiedOrderItem oi = unifiedOrderItemMapper.selectById(fi.getUnifiedOrderItemId());
                 if (oi == null) continue;
                 String orderItemId = oi.getExternalOrderItemId();
-                if (orderItemId == null || orderItemId.isBlank()) orderItemId = String.valueOf(oi.getId());
+                if (orderItemId == null || orderItemId.isBlank()) continue;
                 int qty = fi.getReservedQty() != null ? fi.getReservedQty() : (fi.getQty() != null ? fi.getQty() : 0);
                 if (qty <= 0) continue;
                 ConfirmShipmentRequest.OrderItem item = new ConfirmShipmentRequest.OrderItem();
@@ -148,7 +155,7 @@ public class ChannelAckApplicationService {
                 orderItems.add(item);
             }
             if (orderItems.isEmpty()) {
-                throw new BusinessException("No order items for confirmShipment");
+                log.info("createAckFromOutbound all items missing external_order_item_id orderId={} outboundId={} (P1.6+ will backfill on sendAck)", amazonOrderId, outboundId);
             }
 
             ChannelShipmentAck ack = new ChannelShipmentAck();
@@ -162,7 +169,7 @@ public class ChannelAckApplicationService {
             ack.setCarrierName(carrierName);
             ack.setShippingMethod("SHIPPING");
             ack.setTrackingNo(wmsShip.getTrackingNo());
-            ack.setShipDateUtc(LocalDateTime.ofInstant(shipDateUtc, ZoneId.systemDefault()));
+            ack.setShipDateUtc(LocalDateTime.ofInstant(shipDateUtc, ZoneOffset.UTC));
             ack.setStatus(ChannelShipmentAck.STATUS_CREATED);
             ack.setRetryCount(0);
             ack.setBusinessIdempotencyKey(ChannelShipmentAck.buildIdempotencyKey(CHANNEL_AMAZON, amazonOrderId, packageRef));
@@ -198,6 +205,34 @@ public class ChannelAckApplicationService {
         ack.setVersion(ack.getVersion() == null ? 0 : ack.getVersion() + 1);
         ack.setLastAttemptAt(LocalDateTime.now());
 
+        Long fulfillmentId = ack.getFulfillmentId();
+        if (fulfillmentId == null && ack.getUnifiedOrderId() != null) {
+            Fulfillment f = fulfillmentMapper.selectOne(new LambdaQueryWrapper<Fulfillment>()
+                .eq(Fulfillment::getUnifiedOrderId, ack.getUnifiedOrderId()).eq(Fulfillment::getDeleted, 0).last("LIMIT 1"));
+            if (f != null) fulfillmentId = f.getId();
+        }
+        try {
+            amazonOrderQueryService.getOrderItemsAndBackfill(ack.getAmazonOrderId(), ack.getUnifiedOrderId(), fulfillmentId, ackId);
+        } catch (AmazonOrderItemsApiException e) {
+            GetOrderItemsResult res = e.getResult();
+            if (res == null) res = GetOrderItemsResult.fail(500, "Unknown", e.getMessage(), null);
+            ConfirmShipmentResult result = ConfirmShipmentResult.fail(res.getHttpStatusCode(), res.getErrorCode(), res.getErrorMessage(), res.getResponseBody());
+            applyFailureAndHold(ackId, ack, result);
+            return;
+        } catch (BusinessException be) {
+            if ("Amazon orderItemId not matched".equals(be.getMessage())) {
+                ack.markFailedManual(500, "OrderItemNotMatched", be.getMessage());
+                ackMapper.update(null, new LambdaUpdateWrapper<ChannelShipmentAck>()
+                    .eq(ChannelShipmentAck::getId, ackId).eq(ChannelShipmentAck::getStatus, ChannelShipmentAck.STATUS_SENDING)
+                    .set(ChannelShipmentAck::getStatus, ack.getStatus()).set(ChannelShipmentAck::getResponseCode, ack.getResponseCode())
+                    .set(ChannelShipmentAck::getErrorCode, ack.getErrorCode()).set(ChannelShipmentAck::getErrorMessage, ack.getErrorMessage())
+                    .set(ChannelShipmentAck::getNextRetryAt, null).set(ChannelShipmentAck::getRetryCount, ack.getRetryCount()).setSql("version = version + 1"));
+                createOrderHoldForFailedManual(ack, "AMZ_ORDER_ITEM_NOT_MATCHED");
+                return;
+            }
+            throw be;
+        }
+
         ConfirmShipmentRequest req = buildConfirmRequest(ack);
         String payloadJson = maskSensitive(req);
         ackMapper.update(null, new LambdaUpdateWrapper<ChannelShipmentAck>()
@@ -221,6 +256,10 @@ public class ChannelAckApplicationService {
                 .set(ChannelShipmentAck::getNextRetryAt, null).setSql("version = version + 1"));
             return;
         }
+        applyFailureAndHold(ackId, ack, result);
+    }
+
+    private void applyFailureAndHold(Long ackId, ChannelShipmentAck ack, ConfirmShipmentResult result) {
         int retryCount = (ack.getRetryCount() == null ? 0 : ack.getRetryCount()) + 1;
         if (result.isRetryable() && retryCount < ChannelShipmentAck.MAX_RETRY_COUNT) {
             LocalDateTime nextAt = ChannelShipmentAck.nextRetryAt(retryCount, LocalDateTime.now());
@@ -240,10 +279,10 @@ public class ChannelAckApplicationService {
             .set(ChannelShipmentAck::getResponseBody, result.getResponseBody()).set(ChannelShipmentAck::getErrorCode, ack.getErrorCode())
             .set(ChannelShipmentAck::getErrorMessage, ack.getErrorMessage()).set(ChannelShipmentAck::getNextRetryAt, null)
             .set(ChannelShipmentAck::getRetryCount, ack.getRetryCount()).setSql("version = version + 1"));
-        createOrderHoldForFailedManual(ack);
+        createOrderHoldForFailedManual(ack, "AMZ_CONFIRM_SHIPMENT_FAILED");
     }
 
-    private void createOrderHoldForFailedManual(ChannelShipmentAck ack) {
+    private void createOrderHoldForFailedManual(ChannelShipmentAck ack, String reasonCode) {
         if (ack.getUnifiedOrderId() == null) return;
         String shopIdStr = ack.getShopId() != null ? String.valueOf(ack.getShopId()) : "";
         OrderHold existing = orderHoldMapper.selectOne(new LambdaQueryWrapper<OrderHold>()
@@ -254,7 +293,7 @@ public class ChannelAckApplicationService {
         OrderHold hold = new OrderHold();
         hold.setHoldType(OrderHold.HOLD_TYPE_CHANNEL_ACK);
         hold.setStatus(OrderHold.STATUS_OPEN);
-        hold.setReasonCode("AMZ_CONFIRM_SHIPMENT_FAILED");
+        hold.setReasonCode(reasonCode != null ? reasonCode : "AMZ_CONFIRM_SHIPMENT_FAILED");
         hold.setReasonMsg(ack.getErrorMessage() != null ? ack.getErrorMessage().substring(0, Math.min(512, ack.getErrorMessage().length())) : "Confirm shipment failed");
         hold.setChannel(CHANNEL_AMAZON);
         hold.setShopId(shopIdStr);
@@ -267,20 +306,38 @@ public class ChannelAckApplicationService {
     }
 
     private ConfirmShipmentRequest buildConfirmRequest(ChannelShipmentAck ack) {
+        Instant nowUtc = Instant.now();
+        Instant shipDate;
+        if (ack.getShipDateUtc() != null) {
+            shipDate = ack.getShipDateUtc().atOffset(ZoneOffset.UTC).toInstant();
+        } else {
+            shipDate = nowUtc.minusSeconds(5);
+        }
+        shipDate = shipDate.isAfter(nowUtc.minusSeconds(2)) ? nowUtc.minusSeconds(2) : shipDate;
+        UnifiedOrder order = null;
+        if (ack.getUnifiedOrderId() != null) {
+            order = unifiedOrderMapper.selectById(ack.getUnifiedOrderId());
+            if (order != null && order.getOrderPurchaseDateUtc() != null) {
+                Instant purchaseUtc = order.getOrderPurchaseDateUtc().atOffset(ZoneOffset.UTC).toInstant();
+                if (shipDate.isBefore(purchaseUtc)) shipDate = purchaseUtc;
+            }
+        }
+        if (shipDate.isAfter(nowUtc.minusSeconds(2))) shipDate = nowUtc.minusSeconds(2);
+
         ConfirmShipmentRequest req = new ConfirmShipmentRequest();
         req.setMarketplaceId(ack.getMarketplaceId() != null ? ack.getMarketplaceId() : "ATVPDKIKX0DER");
         req.setCodCollectionMethod("");
         ConfirmShipmentRequest.PackageDetail pkg = new ConfirmShipmentRequest.PackageDetail();
         pkg.setPackageReferenceId(ack.getPackageReferenceId());
-        pkg.setCarrierCode(ack.getCarrierCode() != null ? ack.getCarrierCode() : "Other");
-        pkg.setCarrierName(ack.getCarrierName() != null ? ack.getCarrierName() : "Other");
+        String carrierCode = ack.getCarrierCode() != null ? ack.getCarrierCode() : "Other";
+        pkg.setCarrierCode(carrierCode);
+        if ("Other".equals(carrierCode) && ack.getCarrierName() != null && !ack.getCarrierName().isBlank()) {
+            pkg.setCarrierName(ack.getCarrierName());
+        }
         pkg.setShippingMethod(ack.getShippingMethod() != null ? ack.getShippingMethod() : "SHIPPING");
         pkg.setTrackingNumber(ack.getTrackingNo());
-        if (ack.getShipDateUtc() != null) {
-            pkg.setShipDate(ack.getShipDateUtc().atZone(ZoneId.systemDefault()).toInstant());
-        } else {
-            pkg.setShipDate(Instant.now().minusSeconds(5));
-        }
+        pkg.setShipDate(shipDate);
+
         List<ConfirmShipmentRequest.OrderItem> items = new ArrayList<>();
         Long fulfillmentId = ack.getFulfillmentId();
         if (fulfillmentId == null && ack.getUnifiedOrderId() != null) {
@@ -293,7 +350,8 @@ public class ChannelAckApplicationService {
         for (FulfillmentItem fi : ffItems) {
             UnifiedOrderItem oi = unifiedOrderItemMapper.selectById(fi.getUnifiedOrderItemId());
             if (oi == null) continue;
-            String orderItemId = oi.getExternalOrderItemId() != null ? oi.getExternalOrderItemId() : String.valueOf(oi.getId());
+            String orderItemId = oi.getExternalOrderItemId();
+            if (orderItemId == null || orderItemId.isBlank()) continue;
             int qty = fi.getReservedQty() != null ? fi.getReservedQty() : (fi.getQty() != null ? fi.getQty() : 0);
             if (qty <= 0) continue;
             ConfirmShipmentRequest.OrderItem item = new ConfirmShipmentRequest.OrderItem();
@@ -302,14 +360,7 @@ public class ChannelAckApplicationService {
             items.add(item);
         }
         if (items.isEmpty()) {
-            UnifiedOrderItem oi = unifiedOrderItemMapper.selectOne(new LambdaQueryWrapper<UnifiedOrderItem>()
-                .eq(UnifiedOrderItem::getUnifiedOrderId, ack.getUnifiedOrderId()).eq(UnifiedOrderItem::getDeleted, 0).last("LIMIT 1"));
-            if (oi != null) {
-                ConfirmShipmentRequest.OrderItem item = new ConfirmShipmentRequest.OrderItem();
-                item.setOrderItemId(oi.getExternalOrderItemId() != null ? oi.getExternalOrderItemId() : String.valueOf(oi.getId()));
-                item.setQuantity(oi.getQuantity() != null ? oi.getQuantity() : 1);
-                items.add(item);
-            }
+            throw new BusinessException("Missing Amazon orderItemId (external_order_item_id required for all items)");
         }
         pkg.setOrderItems(items);
         req.setPackageDetail(pkg);

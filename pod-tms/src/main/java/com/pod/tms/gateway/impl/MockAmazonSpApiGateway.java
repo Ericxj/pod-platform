@@ -1,13 +1,18 @@
 package com.pod.tms.gateway.impl;
 
+import com.pod.tms.gateway.AmazonOrderItemDTO;
 import com.pod.tms.gateway.AmazonSpApiGateway;
 import com.pod.tms.gateway.ConfirmShipmentRequest;
 import com.pod.tms.gateway.ConfirmShipmentResult;
+import com.pod.tms.gateway.GetOrderItemsResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Mock Amazon SP-API confirmShipment。可通过配置模拟 204/429/503/400 用于联调与验收。
@@ -37,5 +42,18 @@ public class MockAmazonSpApiGateway implements AmazonSpApiGateway {
             return ConfirmShipmentResult.fail(400, "InvalidInput", "Invalid shipment confirmation payload", "{\"errors\":[{\"code\":\"InvalidInput\"}]}");
         }
         return ConfirmShipmentResult.ok(204, null);
+    }
+
+    @Override
+    public GetOrderItemsResult getOrderItems(String amazonOrderId) {
+        log.info("[Mock] getOrderItems orderId={}", amazonOrderId);
+        List<AmazonOrderItemDTO> items = new ArrayList<>();
+        AmazonOrderItemDTO dto = new AmazonOrderItemDTO();
+        dto.setOrderItemId("mock-order-item-1");
+        dto.setSellerSKU("MOCK-SKU");
+        dto.setAsin("B0MOCK01");
+        dto.setQuantityOrdered(1);
+        items.add(dto);
+        return GetOrderItemsResult.ok(items);
     }
 }

@@ -37,6 +37,22 @@ logging:
     com.pod: DEBUG
     org.springframework: INFO
 
+# TMS 渠道回传：gateway=mock 使用 Mock 网关；gateway=real 使用真实 SP-API（需配置 spapi）
+tms:
+  amazon:
+    gateway: mock
+    # real 模式示例（勿提交真实密钥）
+    # gateway: real
+    # spapi:
+    #   sellingRegion: NA
+    #   lwaClientId: "..."
+    #   lwaClientSecret: "..."
+    #   lwaRefreshToken: "..."
+    #   awsAccessKeyId: "..."
+    #   awsSecretAccessKey: "..."
+    #   connectTimeoutMs: 10000
+    #   readTimeoutMs: 30000
+
 xxl:
   job:
     admin:
