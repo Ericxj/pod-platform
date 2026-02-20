@@ -19,6 +19,7 @@ public enum FulfillmentStatus {
     RESERVED,
     ART_READY,
     READY_TO_SHIP,
+    SHIPPED,
     HOLD_INVENTORY,
     RELEASED,
     CANCELLED;
@@ -29,6 +30,7 @@ public enum FulfillmentStatus {
     private static final Set<FulfillmentStatus> ALLOW_CONFIRM = EnumSet.of(CREATED);
     private static final Set<FulfillmentStatus> ALLOW_ART_READY = EnumSet.of(RESERVED);
     private static final Set<FulfillmentStatus> ALLOW_READY_TO_SHIP = EnumSet.of(ART_READY);
+    private static final Set<FulfillmentStatus> ALLOW_SHIPPED = EnumSet.of(READY_TO_SHIP);
 
     public void requireAllowReserve() {
         if (!ALLOW_RESERVE.contains(this)) {
@@ -63,6 +65,12 @@ public enum FulfillmentStatus {
     public void requireAllowReadyToShip() {
         if (!ALLOW_READY_TO_SHIP.contains(this)) {
             throw new BusinessException("Fulfillment can only move to READY_TO_SHIP from ART_READY. Current: " + this);
+        }
+    }
+
+    public void requireAllowShipped() {
+        if (!ALLOW_SHIPPED.contains(this)) {
+            throw new BusinessException("Fulfillment can only move to SHIPPED from READY_TO_SHIP. Current: " + this);
         }
     }
 

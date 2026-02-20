@@ -53,6 +53,26 @@ public class InventoryBalance extends BaseEntity {
         this.availableQty = this.onHandQty - (this.allocatedQty == null ? 0 : this.allocatedQty);
     }
 
+    /**
+     * P1.5 出库扣减：扣减在库与预占（发货消耗）。
+     */
+    public void deduct(int qty) {
+        if (qty <= 0) {
+            throw new BusinessException("Deduct quantity must be positive");
+        }
+        int onHand = this.onHandQty != null ? this.onHandQty : 0;
+        int allocated = this.allocatedQty != null ? this.allocatedQty : 0;
+        if (onHand < qty) {
+            throw new BusinessException("Insufficient on-hand for SKU: " + this.skuId);
+        }
+        if (allocated < qty) {
+            throw new BusinessException("Insufficient allocated for SKU: " + this.skuId);
+        }
+        this.onHandQty = onHand - qty;
+        this.allocatedQty = allocated - qty;
+        this.availableQty = this.onHandQty - this.allocatedQty;
+    }
+
     // --- Getters & Setters ---
 
     public Long getWarehouseId() { return warehouseId; }

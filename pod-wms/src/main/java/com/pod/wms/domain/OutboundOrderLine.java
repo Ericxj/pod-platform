@@ -10,6 +10,8 @@ public class OutboundOrderLine extends BaseEntity {
     private Long skuId;
     private Integer qty;
     private Integer qtyPicked;
+    @com.baomidou.mybatisplus.annotation.TableField("packed_qty")
+    private Integer packedQty;
     private Integer qtyShipped;
 
     public Long getOutboundId() {
@@ -50,6 +52,14 @@ public class OutboundOrderLine extends BaseEntity {
 
     public void setQtyPicked(Integer qtyPicked) {
         this.qtyPicked = qtyPicked;
+    }
+
+    public Integer getPackedQty() {
+        return packedQty;
+    }
+
+    public void setPackedQty(Integer packedQty) {
+        this.packedQty = packedQty;
     }
 
     public Integer getQtyShipped() {

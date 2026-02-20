@@ -19,6 +19,8 @@ public class OutboundOrder extends BaseEntity {
 
     private String outboundNo;
     private String outboundType;
+    @com.baomidou.mybatisplus.annotation.TableField("source_type")
+    private String sourceType;
     private String sourceNo;
     private Long fulfillmentId;
     private Long warehouseId;
@@ -39,8 +41,8 @@ public class OutboundOrder extends BaseEntity {
     }
 
     public void startPicking() {
-        if (!STATUS_ALLOCATED.equals(this.status) && !STATUS_PICKING.equals(this.status)) {
-             throw new BusinessException("Outbound order must be ALLOCATED to start picking. Current: " + this.status);
+        if (!STATUS_CREATED.equals(this.status) && !STATUS_PICKING.equals(this.status) && !STATUS_ALLOCATED.equals(this.status)) {
+            throw new BusinessException("Outbound order must be CREATED to start picking. Current: " + this.status);
         }
         this.status = STATUS_PICKING;
     }
@@ -53,8 +55,8 @@ public class OutboundOrder extends BaseEntity {
     }
 
     public void completePacking() {
-        if (!STATUS_PICKED.equals(this.status)) {
-            throw new BusinessException("Outbound order must be PICKED to complete packing. Current: " + this.status);
+        if (!STATUS_PICKED.equals(this.status) && !STATUS_PICKING.equals(this.status)) {
+            throw new BusinessException("Outbound order must be PICKED or PICKING to complete packing. Current: " + this.status);
         }
         this.status = STATUS_PACKED;
     }
@@ -89,6 +91,14 @@ public class OutboundOrder extends BaseEntity {
 
     public void setOutboundType(String outboundType) {
         this.outboundType = outboundType;
+    }
+
+    public String getSourceType() {
+        return sourceType;
+    }
+
+    public void setSourceType(String sourceType) {
+        this.sourceType = sourceType;
     }
 
     public String getSourceNo() {

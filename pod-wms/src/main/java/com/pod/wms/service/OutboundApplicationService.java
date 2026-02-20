@@ -1,10 +1,21 @@
 package com.pod.wms.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.pod.common.core.context.TenantContext;
 import com.pod.common.core.exception.BusinessException;
 import com.pod.common.utils.TraceIdUtils;
 import com.pod.infra.context.RequestIdContext;
 import com.pod.infra.idempotent.service.IdempotentService;
+import com.pod.inv.service.InventoryApplicationService;
+import com.pod.oms.domain.Fulfillment;
+import com.pod.oms.domain.FulfillmentItem;
+import com.pod.oms.domain.FulfillmentStatus;
+import com.pod.oms.mapper.FulfillmentMapper;
+import com.pod.oms.mapper.FulfillmentItemMapper;
 import org.slf4j.MDC;
 import com.pod.wms.domain.*;
 import com.pod.wms.mapper.*;
@@ -14,10 +25,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
 public class OutboundApplicationService {
+
+    private static final String SOURCE_TYPE_FULFILLMENT = "FULFILLMENT";
 
     @Autowired
     private OutboundOrderMapper outboundOrderMapper;
@@ -34,7 +48,210 @@ public class OutboundApplicationService {
     @Autowired
     private PackOrderLineMapper packOrderLineMapper;
     @Autowired
+    private WmsShipmentMapper wmsShipmentMapper;
+    @Autowired
+    private FulfillmentMapper fulfillmentMapper;
+    @Autowired
+    private FulfillmentItemMapper fulfillmentItemMapper;
+    @Autowired
+    private InventoryApplicationService inventoryApplicationService;
+    @Autowired
     private IdempotentService idempotentService;
+
+    private long tenantId() { return TenantContext.getTenantId() != null ? TenantContext.getTenantId() : 0L; }
+    private long factoryId() { return TenantContext.getFactoryId() != null ? TenantContext.getFactoryId() : 0L; }
+
+    /** P1.5: 从 Fulfillment(READY_TO_SHIP) 创建出库单，幂等 uk_src */
+    @Transactional(rollbackFor = Exception.class)
+    public Long createFromFulfillment(Long fulfillmentId) {
+        String requestId = RequestIdContext.get();
+        if (requestId == null || requestId.isBlank()) requestId = "wms-ob-" + fulfillmentId + "-" + System.currentTimeMillis();
+        return idempotentService.execute(requestId, "createOutboundFromFulfillment:" + fulfillmentId, () -> {
+            Fulfillment f = fulfillmentMapper.selectById(fulfillmentId);
+            if (f == null || !Objects.equals(f.getTenantId(), tenantId()) || !Objects.equals(f.getFactoryId(), factoryId()) || (f.getDeleted() != null && f.getDeleted() != 0))
+                throw new BusinessException("Fulfillment not found: " + fulfillmentId);
+            if (!FulfillmentStatus.READY_TO_SHIP.name().equals(f.getStatus()))
+                throw new BusinessException("Fulfillment must be READY_TO_SHIP. Current: " + f.getStatus());
+            String sourceNo = f.getFulfillmentNo();
+            OutboundOrder existing = outboundOrderMapper.selectOne(new LambdaQueryWrapper<OutboundOrder>()
+                .eq(OutboundOrder::getTenantId, tenantId()).eq(OutboundOrder::getFactoryId, factoryId())
+                .eq(OutboundOrder::getSourceType, SOURCE_TYPE_FULFILLMENT).eq(OutboundOrder::getSourceNo, sourceNo).eq(OutboundOrder::getDeleted, 0));
+            if (existing != null) return existing.getId();
+
+            List<FulfillmentItem> items = fulfillmentItemMapper.selectList(
+                new LambdaQueryWrapper<FulfillmentItem>().eq(FulfillmentItem::getFulfillmentId, fulfillmentId).eq(FulfillmentItem::getDeleted, 0));
+            if (items == null || items.isEmpty()) throw new BusinessException("Fulfillment has no lines: " + fulfillmentId);
+
+            String outboundNo = "OB-" + sourceNo;
+            OutboundOrder ob = new OutboundOrder();
+            ob.setOutboundNo(outboundNo);
+            ob.setOutboundType(SOURCE_TYPE_FULFILLMENT);
+            ob.setSourceType(SOURCE_TYPE_FULFILLMENT);
+            ob.setSourceNo(sourceNo);
+            ob.setFulfillmentId(fulfillmentId);
+            ob.setWarehouseId(f.getWarehouseId() != null ? f.getWarehouseId() : 300001L);
+            ob.setStatus(OutboundOrder.STATUS_CREATED);
+            ob.setTraceId(TraceIdUtils.getTraceId());
+            outboundOrderMapper.insert(ob);
+
+            int lineNo = 1;
+            for (FulfillmentItem item : items) {
+                int qty = item.getReservedQty() != null && item.getReservedQty() > 0 ? item.getReservedQty() : (item.getQty() != null ? item.getQty() : 0);
+                if (qty <= 0) continue;
+                OutboundOrderLine line = new OutboundOrderLine();
+                line.setOutboundId(ob.getId());
+                line.setLineNo(lineNo++);
+                line.setSkuId(item.getSkuId());
+                line.setQty(qty);
+                line.setQtyPicked(0);
+                line.setPackedQty(0);
+                line.setQtyShipped(0);
+                outboundOrderLineMapper.insert(line);
+            }
+            return ob.getId();
+        });
+    }
+
+    /** P1.5: 开始拣货 CREATED -> PICKING */
+    @Transactional(rollbackFor = Exception.class)
+    public void startPicking(Long outboundId) {
+        OutboundOrder ob = getOutbound(outboundId);
+        if (!OutboundOrder.STATUS_CREATED.equals(ob.getStatus()))
+            throw new BusinessException("Outbound must be CREATED to start picking. Current: " + ob.getStatus());
+        ob.startPicking();
+        int rows = outboundOrderMapper.update(null, new LambdaUpdateWrapper<OutboundOrder>()
+            .eq(OutboundOrder::getId, outboundId).eq(OutboundOrder::getStatus, OutboundOrder.STATUS_CREATED)
+            .eq(OutboundOrder::getVersion, ob.getVersion()).set(OutboundOrder::getStatus, OutboundOrder.STATUS_PICKING).setSql("version = version + 1"));
+        if (rows == 0) throw new BusinessException("Concurrent update or invalid status");
+    }
+
+    /** P1.5: 确认拣货，按行累加 picked_qty。lines: list of {lineId, pickedQty} */
+    @Transactional(rollbackFor = Exception.class)
+    public void confirmPicking(Long outboundId, List<PickingLineDto> lines) {
+        OutboundOrder ob = getOutbound(outboundId);
+        if (!OutboundOrder.STATUS_PICKING.equals(ob.getStatus()) && !OutboundOrder.STATUS_CREATED.equals(ob.getStatus()))
+            throw new BusinessException("Outbound must be PICKING to confirm. Current: " + ob.getStatus());
+        for (PickingLineDto dto : lines) {
+            if (dto.getLineId() == null || dto.getPickedQty() == null) continue;
+            OutboundOrderLine line = outboundOrderLineMapper.selectById(dto.getLineId());
+            if (line == null || !Objects.equals(line.getOutboundId(), outboundId)) continue;
+            int add = dto.getPickedQty();
+            if (add <= 0) continue;
+            int newPicked = (line.getQtyPicked() != null ? line.getQtyPicked() : 0) + add;
+            if (line.getQty() != null && newPicked > line.getQty()) newPicked = line.getQty();
+            outboundOrderLineMapper.update(null, new LambdaUpdateWrapper<OutboundOrderLine>()
+                .eq(OutboundOrderLine::getId, dto.getLineId()).set(OutboundOrderLine::getQtyPicked, newPicked).setSql("version = version + 1"));
+        }
+        if (!OutboundOrder.STATUS_PICKING.equals(ob.getStatus())) {
+            outboundOrderMapper.update(null, new LambdaUpdateWrapper<OutboundOrder>()
+                .eq(OutboundOrder::getId, outboundId).set(OutboundOrder::getStatus, OutboundOrder.STATUS_PICKING).setSql("version = version + 1"));
+        }
+    }
+
+    /** P1.5: 打包，生成 wms_pack_order + lines，出库单 -> PACKED */
+    @Transactional(rollbackFor = Exception.class)
+    public void pack(Long outboundId) {
+        OutboundOrder ob = getOutbound(outboundId);
+        if (!OutboundOrder.STATUS_PICKING.equals(ob.getStatus()) && !OutboundOrder.STATUS_PICKED.equals(ob.getStatus()))
+            throw new BusinessException("Outbound must be PICKING or PICKED to pack. Current: " + ob.getStatus());
+        List<OutboundOrderLine> lines = outboundOrderLineMapper.selectList(new LambdaQueryWrapper<OutboundOrderLine>().eq(OutboundOrderLine::getOutboundId, outboundId).eq(OutboundOrderLine::getDeleted, 0));
+        PackOrder packOrder = new PackOrder();
+        packOrder.setPackNo("PK-" + ob.getOutboundNo() + "-" + System.currentTimeMillis());
+        packOrder.setOutboundId(ob.getId());
+        packOrder.setStatus("PACKED");
+        packOrder.setPackageCount(1);
+        packOrder.setTraceId(TraceIdUtils.getTraceId());
+        packOrderMapper.insert(packOrder);
+        int lineNo = 1;
+        for (OutboundOrderLine line : lines) {
+            int qty = line.getQtyPicked() != null && line.getQtyPicked() > 0 ? line.getQtyPicked() : (line.getQty() != null ? line.getQty() : 0);
+            if (qty <= 0) continue;
+            PackOrderLine pl = new PackOrderLine();
+            pl.setPackId(packOrder.getId());
+            pl.setLineNo(lineNo++);
+            pl.setSkuId(line.getSkuId());
+            pl.setQty(qty);
+            pl.setPackageNo(1);
+            packOrderLineMapper.insert(pl);
+            outboundOrderLineMapper.update(null, new LambdaUpdateWrapper<OutboundOrderLine>()
+                .eq(OutboundOrderLine::getId, line.getId()).set(OutboundOrderLine::getPackedQty, qty).setSql("version = version + 1"));
+        }
+        ob.completePacking();
+        outboundOrderMapper.update(null, new LambdaUpdateWrapper<OutboundOrder>()
+            .eq(OutboundOrder::getId, outboundId).eq(OutboundOrder::getVersion, ob.getVersion())
+            .set(OutboundOrder::getStatus, OutboundOrder.STATUS_PACKED).setSql("version = version + 1"));
+    }
+
+    /** P1.5: 发货 — INV 扣减(FULFILLMENT, sourceNo)、写 wms_shipment、出库单 SHIPPED、Fulfillment SHIPPED */
+    @Transactional(rollbackFor = Exception.class)
+    public void ship(Long outboundId, String carrierCode, String trackingNo) {
+        OutboundOrder ob = getOutbound(outboundId);
+        if (!OutboundOrder.STATUS_PACKED.equals(ob.getStatus()))
+            throw new BusinessException("Outbound must be PACKED to ship. Current: " + ob.getStatus());
+        String sourceNo = ob.getSourceNo();
+        if (sourceNo == null) sourceNo = ob.getOutboundNo();
+        inventoryApplicationService.deductByBiz("FULFILLMENT", sourceNo);
+
+        WmsShipment ship = new WmsShipment();
+        ship.setOutboundId(ob.getId());
+        ship.setOutboundNo(ob.getOutboundNo());
+        ship.setCarrierCode(carrierCode);
+        ship.setTrackingNo(trackingNo);
+        ship.setShippedAt(LocalDateTime.now());
+        wmsShipmentMapper.insert(ship);
+
+        ob.ship();
+        outboundOrderMapper.update(null, new LambdaUpdateWrapper<OutboundOrder>()
+            .eq(OutboundOrder::getId, outboundId).eq(OutboundOrder::getVersion, ob.getVersion())
+            .set(OutboundOrder::getStatus, OutboundOrder.STATUS_SHIPPED).setSql("version = version + 1"));
+
+        if (ob.getFulfillmentId() != null) {
+            Fulfillment f = fulfillmentMapper.selectById(ob.getFulfillmentId());
+            if (f != null && FulfillmentStatus.READY_TO_SHIP.name().equals(f.getStatus())) {
+                f.markShipped();
+                fulfillmentMapper.updateStatusWithLock(f.getId(), f.getStatus(), FulfillmentStatus.READY_TO_SHIP.name(), f.getVersion(), TenantContext.getUserId());
+            }
+        }
+    }
+
+    /** P1.5: 取消 — 释放预占、出库单 CANCELED */
+    @Transactional(rollbackFor = Exception.class)
+    public void cancel(Long outboundId) {
+        OutboundOrder ob = getOutbound(outboundId);
+        if (OutboundOrder.STATUS_SHIPPED.equals(ob.getStatus()))
+            throw new BusinessException("Cannot cancel SHIPPED outbound");
+        String sourceNo = ob.getSourceNo();
+        if (sourceNo != null)
+            inventoryApplicationService.releaseByBiz("FULFILLMENT", sourceNo);
+        ob.cancel();
+        outboundOrderMapper.update(null, new LambdaUpdateWrapper<OutboundOrder>()
+            .eq(OutboundOrder::getId, outboundId).in(OutboundOrder::getStatus, OutboundOrder.STATUS_CREATED, OutboundOrder.STATUS_PICKING, OutboundOrder.STATUS_PICKED, OutboundOrder.STATUS_PACKED)
+            .eq(OutboundOrder::getVersion, ob.getVersion()).set(OutboundOrder::getStatus, OutboundOrder.STATUS_CANCELLED).setSql("version = version + 1"));
+    }
+
+    public OutboundOrder getOutbound(Long id) {
+        OutboundOrder ob = outboundOrderMapper.selectById(id);
+        if (ob == null || !Objects.equals(ob.getTenantId(), tenantId()) || !Objects.equals(ob.getFactoryId(), factoryId()) || (ob.getDeleted() != null && ob.getDeleted() != 0))
+            throw new BusinessException("Outbound not found: " + id);
+        return ob;
+    }
+
+    public IPage<OutboundOrder> page(Page<OutboundOrder> page, String status) {
+        LambdaQueryWrapper<OutboundOrder> q = new LambdaQueryWrapper<>();
+        q.eq(OutboundOrder::getTenantId, tenantId()).eq(OutboundOrder::getFactoryId, factoryId()).eq(OutboundOrder::getDeleted, 0);
+        if (status != null && !status.isBlank()) q.eq(OutboundOrder::getStatus, status);
+        q.orderByDesc(OutboundOrder::getId);
+        return outboundOrderMapper.selectPage(page, q);
+    }
+
+    public static class PickingLineDto {
+        private Long lineId;
+        private Integer pickedQty;
+        public Long getLineId() { return lineId; }
+        public void setLineId(Long lineId) { this.lineId = lineId; }
+        public Integer getPickedQty() { return pickedQty; }
+        public void setPickedQty(Integer pickedQty) { this.pickedQty = pickedQty; }
+    }
 
     @Transactional(rollbackFor = Exception.class)
     public void pullOrdersFromOmsMock() {
@@ -364,11 +581,9 @@ public class OutboundApplicationService {
     }
 
     public OutboundOrder getOutboundOrder(Long id) {
-        OutboundOrder order = outboundOrderMapper.selectById(id);
-        if (order != null) {
-            List<OutboundOrderLine> lines = outboundOrderLineMapper.selectList(new QueryWrapper<OutboundOrderLine>().eq("outbound_id", id));
-            order.setLines(lines);
-        }
+        OutboundOrder order = getOutbound(id);
+        List<OutboundOrderLine> lineList = outboundOrderLineMapper.selectList(new LambdaQueryWrapper<OutboundOrderLine>().eq(OutboundOrderLine::getOutboundId, id).eq(OutboundOrderLine::getDeleted, 0));
+        order.setLines(lineList);
         return order;
     }
 }

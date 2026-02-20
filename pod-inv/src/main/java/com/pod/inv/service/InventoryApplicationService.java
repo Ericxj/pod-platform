@@ -1,6 +1,7 @@
 package com.pod.inv.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pod.common.core.context.TenantContext;
@@ -188,5 +189,62 @@ public class InventoryApplicationService {
         ledger.setAfterAllocated(balance.getAllocatedQty());
         ledger.setRemark("MES produce-in " + bizNo);
         ledgerMapper.insert(ledger);
+    }
+
+    /**
+     * P1.5 出库扣减：按业务单号消耗预占并扣减在库，幂等（同一 bizType+bizNo 仅扣一次）。
+     * 释放/结转预占：将 RESERVED 置为 CONSUMED，扣减 balance.on_hand 与 allocated。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void deductByBiz(String bizType, String bizNo) {
+        Long tenantId = TenantContext.getTenantId();
+        Long factoryId = TenantContext.getFactoryId();
+        LambdaQueryWrapper<InventoryLedger> idem = new LambdaQueryWrapper<>();
+        idem.eq(InventoryLedger::getBizType, bizType).eq(InventoryLedger::getBizNo, bizNo)
+            .eq(InventoryLedger::getTxnType, "WMS_SHIP")
+            .eq(InventoryLedger::getTenantId, tenantId).eq(InventoryLedger::getFactoryId, factoryId)
+            .eq(InventoryLedger::getDeleted, 0);
+        if (ledgerMapper.exists(idem)) return;
+
+        LambdaQueryWrapper<InventoryReservation> q = new LambdaQueryWrapper<>();
+        q.eq(InventoryReservation::getBizType, bizType).eq(InventoryReservation::getBizNo, bizNo)
+         .eq(InventoryReservation::getTenantId, tenantId).eq(InventoryReservation::getFactoryId, factoryId)
+         .eq(InventoryReservation::getDeleted, 0).eq(InventoryReservation::getStatus, "RESERVED");
+        List<InventoryReservation> list = reservationMapper.selectList(q);
+        for (InventoryReservation res : list) {
+            int qty = res.getQty() != null ? res.getQty() : 0;
+            if (qty <= 0) continue;
+            LambdaQueryWrapper<InventoryBalance> bq = new LambdaQueryWrapper<>();
+            bq.eq(InventoryBalance::getWarehouseId, res.getWarehouseId()).eq(InventoryBalance::getSkuId, res.getSkuId())
+              .eq(InventoryBalance::getTenantId, tenantId).eq(InventoryBalance::getFactoryId, factoryId).eq(InventoryBalance::getDeleted, 0);
+            InventoryBalance balance = balanceMapper.selectOne(bq);
+            if (balance == null) throw new BusinessException("Inventory balance not found for warehouse/sku: " + res.getWarehouseId() + "/" + res.getSkuId());
+            int beforeOnHand = balance.getOnHandQty() != null ? balance.getOnHandQty() : 0;
+            int beforeAllocated = balance.getAllocatedQty() != null ? balance.getAllocatedQty() : 0;
+            balance.deduct(qty);
+            int rows = balanceMapper.update(null, new LambdaUpdateWrapper<InventoryBalance>()
+                .eq(InventoryBalance::getId, balance.getId()).eq(InventoryBalance::getVersion, balance.getVersion())
+                .set(InventoryBalance::getOnHandQty, balance.getOnHandQty())
+                .set(InventoryBalance::getAllocatedQty, balance.getAllocatedQty())
+                .set(InventoryBalance::getAvailableQty, balance.getAvailableQty())
+                .setSql("version = version + 1"));
+            if (rows == 0) throw new BusinessException("Inventory concurrency conflict on deduct. Please retry.");
+            res.consume();
+            reservationMapper.updateById(res);
+            InventoryLedger ledger = new InventoryLedger();
+            ledger.setWarehouseId(res.getWarehouseId());
+            ledger.setSkuId(res.getSkuId());
+            ledger.setTxnNo("WMS-SHIP-" + System.currentTimeMillis() + "-" + res.getSkuId());
+            ledger.setTxnType("WMS_SHIP");
+            ledger.setBizType(bizType);
+            ledger.setBizNo(bizNo);
+            ledger.setDeltaQty(-qty);
+            ledger.setBeforeOnHand(beforeOnHand);
+            ledger.setAfterOnHand(balance.getOnHandQty());
+            ledger.setBeforeAllocated(beforeAllocated);
+            ledger.setAfterAllocated(balance.getAllocatedQty());
+            ledger.setRemark("WMS ship " + bizNo);
+            ledgerMapper.insert(ledger);
+        }
     }
 }
