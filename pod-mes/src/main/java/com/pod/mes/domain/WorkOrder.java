@@ -12,7 +12,13 @@ import java.util.Optional;
 @TableName("mes_work_order")
 public class WorkOrder extends BaseEntity {
 
+    /** P1.4 状态机：CREATED->RELEASED->IN_PROGRESS->DONE | CANCELED */
     public static final String STATUS_CREATED = "CREATED";
+    public static final String STATUS_RELEASED = "RELEASED";
+    public static final String STATUS_IN_PROGRESS = "IN_PROGRESS";
+    public static final String STATUS_DONE = "DONE";
+    public static final String STATUS_CANCELED = "CANCELED";
+    /** 兼容旧 */
     public static final String STATUS_SCHEDULED = "SCHEDULED";
     public static final String STATUS_RUNNING = "RUNNING";
     public static final String STATUS_QC = "QC";
@@ -25,6 +31,10 @@ public class WorkOrder extends BaseEntity {
 
     private String workOrderNo;
     private Long fulfillmentId;
+    @com.baomidou.mybatisplus.annotation.TableField("source_type")
+    private String sourceType;
+    @com.baomidou.mybatisplus.annotation.TableField("source_no")
+    private String sourceNo;
     private Long routingId;
     private String status;
     private Integer priority;
@@ -45,21 +55,29 @@ public class WorkOrder extends BaseEntity {
         if (!STATUS_CREATED.equals(this.status)) {
             throw new BusinessException("Cannot release WO from status: " + this.status);
         }
-        this.status = STATUS_SCHEDULED;
+        this.status = STATUS_RELEASED;
     }
 
     public void start() {
-        if (!STATUS_SCHEDULED.equals(this.status) && !STATUS_RUNNING.equals(this.status)) {
+        if (!STATUS_RELEASED.equals(this.status) && !STATUS_IN_PROGRESS.equals(this.status)
+                && !STATUS_SCHEDULED.equals(this.status) && !STATUS_RUNNING.equals(this.status)) {
             throw new BusinessException("Cannot start WO from status: " + this.status);
         }
-        this.status = STATUS_RUNNING;
+        this.status = STATUS_IN_PROGRESS;
     }
 
     public void complete() {
-        if (!STATUS_RUNNING.equals(this.status) && !STATUS_QC.equals(this.status)) {
-             throw new BusinessException("Cannot complete WO from status: " + this.status);
+        if (!STATUS_IN_PROGRESS.equals(this.status) && !STATUS_RUNNING.equals(this.status) && !STATUS_QC.equals(this.status)) {
+            throw new BusinessException("Cannot complete WO from status: " + this.status);
         }
-        this.status = STATUS_FINISHED;
+        this.status = STATUS_DONE;
+    }
+
+    public void cancel() {
+        if (STATUS_DONE.equals(this.status) || STATUS_CANCELED.equals(this.status)) {
+            throw new BusinessException("Cannot cancel WO from status: " + this.status);
+        }
+        this.status = STATUS_CANCELED;
     }
 
     /**
@@ -80,8 +98,8 @@ public class WorkOrder extends BaseEntity {
         op.start();
 
         // 4. Update WorkOrder State if needed
-        if (STATUS_SCHEDULED.equals(this.status) || STATUS_CREATED.equals(this.status)) {
-            this.status = STATUS_RUNNING;
+        if (STATUS_RELEASED.equals(this.status) || STATUS_SCHEDULED.equals(this.status) || STATUS_CREATED.equals(this.status)) {
+            this.status = STATUS_IN_PROGRESS;
         }
     }
 
@@ -117,6 +135,10 @@ public class WorkOrder extends BaseEntity {
         }
     }
 
+    public boolean isDone() {
+        return STATUS_DONE.equals(this.status) || STATUS_FINISHED.equals(this.status);
+    }
+
     private void validatePredecessorDone(WorkOrderOp currentOp, List<WorkOrderOp> allOps) {
         if (currentOp.getStepNo() > 1) {
             int prevStepNo = currentOp.getStepNo() - 1;
@@ -140,6 +162,10 @@ public class WorkOrder extends BaseEntity {
     public void setWorkOrderNo(String workOrderNo) { this.workOrderNo = workOrderNo; }
     public Long getFulfillmentId() { return fulfillmentId; }
     public void setFulfillmentId(Long fulfillmentId) { this.fulfillmentId = fulfillmentId; }
+    public String getSourceType() { return sourceType; }
+    public void setSourceType(String sourceType) { this.sourceType = sourceType; }
+    public String getSourceNo() { return sourceNo; }
+    public void setSourceNo(String sourceNo) { this.sourceNo = sourceNo; }
     public Long getRoutingId() { return routingId; }
     public void setRoutingId(Long routingId) { this.routingId = routingId; }
     public String getStatus() { return status; }

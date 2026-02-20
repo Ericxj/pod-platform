@@ -143,4 +143,50 @@ public class InventoryApplicationService {
             reservationMapper.updateById(res);
         }
     }
+
+    /**
+     * P1.4 完工入库：按业务单号+SKU 增加在库数量，幂等（同一 bizType+bizNo+skuId 仅入一次）。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void produceIn(String bizType, String bizNo, Long warehouseId, Long skuId, int qty) {
+        if (qty <= 0) return;
+        Long tenantId = TenantContext.getTenantId();
+        Long factoryId = TenantContext.getFactoryId();
+        LambdaQueryWrapper<InventoryLedger> idem = new LambdaQueryWrapper<>();
+        idem.eq(InventoryLedger::getBizType, bizType).eq(InventoryLedger::getBizNo, bizNo)
+            .eq(InventoryLedger::getSkuId, skuId).eq(InventoryLedger::getTxnType, "PRODUCE_IN")
+            .eq(InventoryLedger::getTenantId, tenantId).eq(InventoryLedger::getFactoryId, factoryId)
+            .eq(InventoryLedger::getDeleted, 0);
+        if (ledgerMapper.exists(idem)) return;
+
+        LambdaQueryWrapper<InventoryBalance> bq = new LambdaQueryWrapper<>();
+        bq.eq(InventoryBalance::getWarehouseId, warehouseId).eq(InventoryBalance::getSkuId, skuId)
+          .eq(InventoryBalance::getTenantId, tenantId).eq(InventoryBalance::getFactoryId, factoryId)
+          .eq(InventoryBalance::getDeleted, 0);
+        InventoryBalance balance = balanceMapper.selectOne(bq);
+        if (balance == null) throw new BusinessException("Inventory balance not found for warehouse/sku: " + warehouseId + "/" + skuId);
+
+        int beforeOnHand = balance.getOnHandQty() != null ? balance.getOnHandQty() : 0;
+        balance.produceIn(qty);
+        int rows = balanceMapper.updateOnHandWithVersion(
+                balance.getId(), balance.getOnHandQty(), balance.getAvailableQty(), balance.getVersion(),
+                tenantId, factoryId);
+        if (rows == 0) throw new BusinessException("Inventory concurrency conflict on produce-in. Please retry.");
+
+        InventoryLedger ledger = new InventoryLedger();
+        ledger.setWarehouseId(warehouseId);
+        ledger.setLocationId(balance.getLocationId());
+        ledger.setSkuId(skuId);
+        ledger.setTxnNo("PIN-" + System.currentTimeMillis() + "-" + (int) (Math.random() * 1000));
+        ledger.setTxnType("PRODUCE_IN");
+        ledger.setBizType(bizType);
+        ledger.setBizNo(bizNo);
+        ledger.setDeltaQty(qty);
+        ledger.setBeforeOnHand(beforeOnHand);
+        ledger.setAfterOnHand(balance.getOnHandQty());
+        ledger.setBeforeAllocated(balance.getAllocatedQty());
+        ledger.setAfterAllocated(balance.getAllocatedQty());
+        ledger.setRemark("MES produce-in " + bizNo);
+        ledgerMapper.insert(ledger);
+    }
 }

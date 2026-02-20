@@ -107,6 +107,8 @@ onMounted(load);
         <template #default="{ record }">
           <Tag v-if="record.status === 'CREATED'" color="blue">CREATED</Tag>
           <Tag v-else-if="record.status === 'RESERVED'" color="green">RESERVED</Tag>
+          <Tag v-else-if="record.status === 'ART_READY'" color="cyan">ART_READY</Tag>
+          <Tag v-else-if="record.status === 'READY_TO_SHIP'" color="purple">READY_TO_SHIP</Tag>
           <Tag v-else-if="record.status === 'HOLD_INVENTORY'" color="orange">HOLD_INVENTORY</Tag>
           <Tag v-else-if="record.status === 'CANCELLED'" color="default">CANCELLED</Tag>
           <Tag v-else>{{ record.status }}</Tag>

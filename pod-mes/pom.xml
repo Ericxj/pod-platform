@@ -16,6 +16,14 @@
             <groupId>com.pod</groupId>
             <artifactId>pod-infra</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.pod</groupId>
+            <artifactId>pod-oms</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.pod</groupId>
+            <artifactId>pod-inv</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

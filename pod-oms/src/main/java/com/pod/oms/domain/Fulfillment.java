@@ -141,7 +141,15 @@ public class Fulfillment extends BaseEntity {
     }
 
     /**
-     * 取消履约（CREATED | RESERVED | ART_READY | HOLD_INVENTORY | RELEASED -> CANCELLED）。
+     * P1.4：工单完工入库后，ART_READY -> READY_TO_SHIP。
+     */
+    public void markReadyToShip() {
+        FulfillmentStatus.from(this.status).requireAllowReadyToShip();
+        this.status = FulfillmentStatus.READY_TO_SHIP.name();
+    }
+
+    /**
+     * 取消履约（CREATED | RESERVED | ART_READY | READY_TO_SHIP | HOLD_INVENTORY | RELEASED -> CANCELLED）。
      */
     public void cancel() {
         FulfillmentStatus current = FulfillmentStatus.from(this.status);

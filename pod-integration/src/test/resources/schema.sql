@@ -462,7 +462,7 @@ CREATE TABLE IF NOT EXISTS `art_production_file` (
   UNIQUE INDEX `uk_hash`(`tenant_id`, `factory_id`, `file_hash`(64))
 );
 
--- mes_work_order
+-- mes_work_order (P1.4: source_type, source_no, uk_source)
 CREATE TABLE IF NOT EXISTS `mes_work_order` (
   `id` bigint NOT NULL,
   `tenant_id` bigint NOT NULL,
@@ -474,6 +474,8 @@ CREATE TABLE IF NOT EXISTS `mes_work_order` (
   `created_by` bigint,
   `updated_by` bigint,
   `trace_id` varchar(64),
+  `source_type` varchar(32),
+  `source_no` varchar(64),
   `work_order_no` varchar(64) NOT NULL,
   `fulfillment_id` bigint NOT NULL,
   `routing_id` bigint,
@@ -483,7 +485,8 @@ CREATE TABLE IF NOT EXISTS `mes_work_order` (
   `planned_end_at` datetime(3),
   `remark` varchar(255),
   PRIMARY KEY (`id`),
-  UNIQUE INDEX `uk_mes_wo_no`(`tenant_id`, `work_order_no`)
+  UNIQUE INDEX `uk_mes_wo_no`(`tenant_id`, `work_order_no`),
+  UNIQUE INDEX `uk_source`(`tenant_id`, `factory_id`, `source_type`(32), `source_no`(64))
 );
 
 -- mes_work_order_op
@@ -511,7 +514,7 @@ CREATE TABLE IF NOT EXISTS `mes_work_order_op` (
   UNIQUE INDEX `uk_wo_op`(`tenant_id`, `work_order_id`, `step_no`)
 );
 
--- mes_work_order_item
+-- mes_work_order_item (P1.4: produced_qty, scrap_qty)
 CREATE TABLE IF NOT EXISTS `mes_work_order_item` (
   `id` bigint NOT NULL,
   `tenant_id` bigint NOT NULL,
@@ -527,9 +530,37 @@ CREATE TABLE IF NOT EXISTS `mes_work_order_item` (
   `line_no` int NOT NULL,
   `sku_id` bigint NOT NULL,
   `qty` int NOT NULL,
+  `produced_qty` int NOT NULL DEFAULT 0,
+  `scrap_qty` int NOT NULL DEFAULT 0,
   `surface_code` varchar(32),
   `production_file_id` bigint,
   `status` varchar(32) NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE INDEX `uk_wo_line`(`tenant_id`, `work_order_id`, `line_no`)
+  UNIQUE INDEX `uk_wo_line`(`tenant_id`, `work_order_id`, `line_no`),
+  INDEX `idx_work_order_id`(`tenant_id`, `work_order_id`),
+  INDEX `idx_sku_id`(`tenant_id`, `sku_id`)
+);
+
+-- mes_report (P1.4)
+CREATE TABLE IF NOT EXISTS `mes_report` (
+  `id` bigint NOT NULL,
+  `tenant_id` bigint NOT NULL,
+  `factory_id` bigint NOT NULL,
+  `created_at` datetime(3) NOT NULL,
+  `updated_at` datetime(3) NOT NULL,
+  `deleted` tinyint NOT NULL DEFAULT 0,
+  `version` int NOT NULL DEFAULT 0,
+  `created_by` bigint,
+  `updated_by` bigint,
+  `trace_id` varchar(64),
+  `work_order_id` bigint NOT NULL,
+  `work_order_line_id` bigint NOT NULL,
+  `op_code` varchar(64) NOT NULL,
+  `work_order_op_id` bigint,
+  `good_qty` int NOT NULL DEFAULT 0,
+  `scrap_qty` int NOT NULL DEFAULT 0,
+  `workstation_id` bigint,
+  `remark` varchar(255),
+  PRIMARY KEY (`id`),
+  INDEX `idx_wo`(`tenant_id`, `work_order_id`, `created_at`)
 );

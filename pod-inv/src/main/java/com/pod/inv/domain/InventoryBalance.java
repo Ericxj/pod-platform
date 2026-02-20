@@ -41,7 +41,18 @@ public class InventoryBalance extends BaseEntity {
         this.allocatedQty -= qty;
         this.availableQty = this.onHandQty - this.allocatedQty;
     }
-    
+
+    /**
+     * P1.4 完工入库：增加在库数量（生产报工入库）。
+     */
+    public void produceIn(int qty) {
+        if (qty <= 0) {
+            throw new BusinessException("Produce-in quantity must be positive");
+        }
+        this.onHandQty = (this.onHandQty == null ? 0 : this.onHandQty) + qty;
+        this.availableQty = this.onHandQty - (this.allocatedQty == null ? 0 : this.allocatedQty);
+    }
+
     // --- Getters & Setters ---
 
     public Long getWarehouseId() { return warehouseId; }

@@ -8,7 +8,8 @@ import java.util.Set;
  * Fulfillment 状态枚举与合法迁移矩阵。
  * CREATED -> RESERVED | HOLD_INVENTORY | CANCELLED
  * RESERVED -> ART_READY | CANCELLED  (P1.3: 全部 line 生产图 READY 后推进)
- * ART_READY -> CANCELLED
+ * ART_READY -> READY_TO_SHIP | CANCELLED  (P1.4: 工单 DONE 完工入库后推进)
+ * READY_TO_SHIP -> CANCELLED
  * HOLD_INVENTORY -> RESERVED | CANCELLED（retryReserve 后可到 RESERVED）
  * RELEASED 保留兼容；CANCELLED 终态
  */
@@ -17,15 +18,17 @@ public enum FulfillmentStatus {
     CREATED,
     RESERVED,
     ART_READY,
+    READY_TO_SHIP,
     HOLD_INVENTORY,
     RELEASED,
     CANCELLED;
 
     private static final Set<FulfillmentStatus> ALLOW_RESERVE = EnumSet.of(CREATED, HOLD_INVENTORY);
     private static final Set<FulfillmentStatus> ALLOW_RELEASE = EnumSet.of(CREATED, RESERVED);
-    private static final Set<FulfillmentStatus> ALLOW_CANCEL = EnumSet.of(CREATED, RESERVED, ART_READY, HOLD_INVENTORY, RELEASED);
+    private static final Set<FulfillmentStatus> ALLOW_CANCEL = EnumSet.of(CREATED, RESERVED, ART_READY, READY_TO_SHIP, HOLD_INVENTORY, RELEASED);
     private static final Set<FulfillmentStatus> ALLOW_CONFIRM = EnumSet.of(CREATED);
     private static final Set<FulfillmentStatus> ALLOW_ART_READY = EnumSet.of(RESERVED);
+    private static final Set<FulfillmentStatus> ALLOW_READY_TO_SHIP = EnumSet.of(ART_READY);
 
     public void requireAllowReserve() {
         if (!ALLOW_RESERVE.contains(this)) {
@@ -54,6 +57,12 @@ public enum FulfillmentStatus {
     public void requireAllowArtReady() {
         if (!ALLOW_ART_READY.contains(this)) {
             throw new BusinessException("Fulfillment can only move to ART_READY from RESERVED. Current: " + this);
+        }
+    }
+
+    public void requireAllowReadyToShip() {
+        if (!ALLOW_READY_TO_SHIP.contains(this)) {
+            throw new BusinessException("Fulfillment can only move to READY_TO_SHIP from ART_READY. Current: " + this);
         }
     }
 

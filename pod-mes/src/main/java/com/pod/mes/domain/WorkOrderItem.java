@@ -10,6 +10,10 @@ public class WorkOrderItem extends BaseEntity {
     private Integer lineNo;
     private Long skuId;
     private Integer qty;
+    @com.baomidou.mybatisplus.annotation.TableField("produced_qty")
+    private Integer producedQty;
+    @com.baomidou.mybatisplus.annotation.TableField("scrap_qty")
+    private Integer scrapQty;
     private String surfaceCode;
     private Long productionFileId;
     private String status;
@@ -22,6 +26,10 @@ public class WorkOrderItem extends BaseEntity {
     public void setSkuId(Long skuId) { this.skuId = skuId; }
     public Integer getQty() { return qty; }
     public void setQty(Integer qty) { this.qty = qty; }
+    public Integer getProducedQty() { return producedQty; }
+    public void setProducedQty(Integer producedQty) { this.producedQty = producedQty; }
+    public Integer getScrapQty() { return scrapQty; }
+    public void setScrapQty(Integer scrapQty) { this.scrapQty = scrapQty; }
     public String getSurfaceCode() { return surfaceCode; }
     public void setSurfaceCode(String surfaceCode) { this.surfaceCode = surfaceCode; }
     public Long getProductionFileId() { return productionFileId; }
